@@ -18,6 +18,11 @@ export class CustomersController {
     return this.customersService.findAll(paginationDto);
   }
 
+  @Patch(':id')
+  update(@Param('id', ParseUUIDPipe) id: string, @Body() updateCustomerDto: UpdateCustomerDto) {
+    return this.customersService.update(id, updateCustomerDto);
+  }
+
   @Patch('deactivate/:id')
   deactivate(@Param('id', ParseUUIDPipe) id: string) {
     return this.customersService.deactivate(id);

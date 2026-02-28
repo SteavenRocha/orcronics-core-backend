@@ -58,6 +58,23 @@ export class CustomersService {
     return customer;
   }
 
+  async update(id: string, updateCustomerDto: UpdateCustomerDto): Promise<Customer> {
+    if (Object.keys(updateCustomerDto).length === 0) {
+      throw new BadRequestException('No fields provided to update');
+    }
+
+    const customer = await this.customerRepository.preload({
+      id,
+      ...updateCustomerDto,
+    });
+
+    if (!customer) {
+      throw new NotFoundException(`Customer with ID "${id}" not found`);
+    }
+
+    return await this.customerRepository.save(customer);
+  }
+
   async deactivate(id: string): Promise<Customer> {
     const customer = await this.findOne(id);
     customer.is_active = false;
