@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Query } from '@nestjs/common';
 import { BranchesService } from './branches.service';
 import { CreateBranchDto } from './dto/create-branch.dto';
 import { UpdateBranchDto } from './dto/update-branch.dto';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Controller('branches')
 export class BranchesController {
@@ -18,8 +19,11 @@ export class BranchesController {
   }
 
   @Get('customer/:customerId')
-  findByCustomer(@Param('customerId', ParseUUIDPipe) customerId: string) {
-    return this.branchesService.findByCustomer(customerId);
+  findByCustomer(
+    @Param('customerId', ParseUUIDPipe) customerId: string,
+    @Query() paginationDto: PaginationDto
+  ) {
+    return this.branchesService.findByCustomer(customerId, paginationDto);
   }
 
   @Patch(':id')
