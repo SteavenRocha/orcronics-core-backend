@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Customer } from './entities/customer.entity';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Injectable()
 export class CustomersService {
@@ -18,8 +19,35 @@ export class CustomersService {
     return await this.customerRepository.save(customer);
   }
 
-  async findAll(): Promise<Customer[]> {
-    return await this.customerRepository.find();
+  async findAll(paginationDto: PaginationDto): Promise<{ data: Customer[], meta: object }> {
+    const { limit = 10, page = 1 } = paginationDto;
+    const offset = (page - 1) * limit;
+
+    const [data, total] = await this.customerRepository.findAndCount({
+      take: limit,
+      skip: offset,
+      order: { created_at: 'DESC' },
+    });
+
+    const totalPages = Math.ceil(total / limit);
+
+    if (page > totalPages && total > 0) {
+      throw new BadRequestException(
+        `Page ${page} does not exist. Total pages: ${totalPages}`
+      );
+    }
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    };
   }
 
   async findOne(id: string): Promise<Customer> {
