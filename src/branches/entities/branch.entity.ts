@@ -1,4 +1,5 @@
-import { Column, CreateDateColumn, DeleteDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Customer } from "src/customers/entities/customer.entity";
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity('branches')
 export class Branch {
@@ -26,5 +27,9 @@ export class Branch {
 
     @DeleteDateColumn({ type: 'timestamp' })
     deleted_at: Date;
+
+    @ManyToOne(() => Customer, (customer) => customer.branches, { nullable: false })
+    @JoinColumn({ name: 'customer_id' })
+    customer: Customer;
 
 }

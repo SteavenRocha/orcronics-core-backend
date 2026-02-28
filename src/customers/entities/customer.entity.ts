@@ -1,4 +1,5 @@
-import { Column, CreateDateColumn, DeleteDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Branch } from "src/branches/entities/branch.entity";
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity('customers')
 export class Customer {
@@ -23,5 +24,8 @@ export class Customer {
 
     @DeleteDateColumn({ type: 'timestamp' })
     deleted_at: Date;
+
+    @OneToMany(() => Branch, (branch) => branch.customer)
+    branches: Branch[];
 
 }
