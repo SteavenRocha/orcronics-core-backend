@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Customer } from './entities/customer.entity';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { paginate } from 'src/common/helpers/pagination.helper';
 
 @Injectable()
 export class CustomersService {
@@ -20,34 +21,9 @@ export class CustomersService {
   }
 
   async findAll(paginationDto: PaginationDto): Promise<{ data: Customer[], meta: object }> {
-    const { limit = 10, page = 1 } = paginationDto;
-    const offset = (page - 1) * limit;
-
-    const [data, total] = await this.customerRepository.findAndCount({
-      take: limit,
-      skip: offset,
+    return await paginate(this.customerRepository, paginationDto, {
       order: { created_at: 'DESC' },
     });
-
-    const totalPages = Math.ceil(total / limit);
-
-    if (page > totalPages && total > 0) {
-      throw new BadRequestException(
-        `Page ${page} does not exist. Total pages: ${totalPages}`
-      );
-    }
-
-    return {
-      data,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages,
-        hasNextPage: page < totalPages,
-        hasPrevPage: page > 1,
-      },
-    };
   }
 
   async findOne(id: string): Promise<Customer> {
