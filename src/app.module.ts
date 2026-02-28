@@ -3,6 +3,7 @@ import { CustomersModule } from './customers/customers.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CommonModule } from './common/common.module';
+import { BranchesModule } from './branches/branches.module';
 
 @Module({
   imports: [
@@ -28,9 +29,11 @@ import { CommonModule } from './common/common.module';
       inject: [ConfigService],
     }),
 
+    CommonModule,
+
     CustomersModule,
 
-    CommonModule,
+    BranchesModule,
 
   ],
   controllers: [],
