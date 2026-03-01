@@ -25,7 +25,9 @@ export class Customer {
     @DeleteDateColumn({ type: 'timestamp' })
     deleted_at: Date;
 
-    @OneToMany(() => Branch, (branch) => branch.customer)
+    @OneToMany(() => Branch, (branch) => branch.customer, {
+        cascade: true,
+    })
     branches: Branch[];
 
 }

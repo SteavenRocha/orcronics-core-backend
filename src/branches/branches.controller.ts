@@ -13,11 +13,6 @@ export class BranchesController {
     return this.branchesService.create(createBranchDto);
   }
 
-  @Get()
-  findAll() {
-    return this.branchesService.findAll();
-  }
-
   @Get('customer/:customerId')
   findByCustomer(
     @Param('customerId', ParseUUIDPipe) customerId: string,
@@ -27,12 +22,12 @@ export class BranchesController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateBranchDto: UpdateBranchDto) {
-    return this.branchesService.update(+id, updateBranchDto);
+  update(@Param('id', ParseUUIDPipe) id: string, @Body() updateBranchDto: UpdateBranchDto) {
+    return this.branchesService.update(id, updateBranchDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.branchesService.remove(+id);
+  remove(@Param('id', ParseUUIDPipe) id: string) {
+    return this.branchesService.remove(id);
   }
 }

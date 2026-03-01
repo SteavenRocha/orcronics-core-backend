@@ -28,7 +28,9 @@ export class Branch {
     @DeleteDateColumn({ type: 'timestamp' })
     deleted_at: Date;
 
-    @ManyToOne(() => Customer, (customer) => customer.branches, { nullable: false })
+    @ManyToOne(() => Customer, (customer) => customer.branches, {
+        nullable: false,
+    })
     @JoinColumn({ name: 'customer_id' })
     customer: Customer;
 

@@ -20,17 +20,34 @@ export class CustomersService {
     return await this.customerRepository.save(customer);
   }
 
-  async findAll(paginationDto: PaginationDto): Promise<{ data: Customer[], meta: object }> {
+  async findAll(paginationDto: PaginationDto) {
     return await paginate(this.customerRepository, paginationDto, {
       order: { created_at: 'DESC' },
     });
   }
 
+  // Sin relaciones -> devuelve solo el CUSTOMER
   async findOne(id: string): Promise<Customer> {
     const customer = await this.customerRepository.findOneBy({ id });
+
     if (!customer) {
       throw new NotFoundException(`Customer with ID "${id}" not found`);
     }
+
+    return customer;
+  }
+
+  // Con relaciones -> devuelve el CUSTOMER y sus BRANCHES
+  async findOneWithBranches(id: string): Promise<Customer> {
+    const customer = await this.customerRepository.findOne({
+      where: { id },
+      relations: { branches: true },
+    });
+
+    if (!customer) {
+      throw new NotFoundException(`Customer with ID "${id}" not found`);
+    }
+
     return customer;
   }
 
@@ -64,8 +81,8 @@ export class CustomersService {
   }
 
   async remove(id: string): Promise<{ message: string }> {
-    const customer = await this.findOne(id);
-    await this.customerRepository.softDelete(id);
+    const customer = await this.findOneWithBranches(id);
+    await this.customerRepository.softRemove(customer);
     return { message: `Customer ${customer.name} has been deleted` };
   }
 

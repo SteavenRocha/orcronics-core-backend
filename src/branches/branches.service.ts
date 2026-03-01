@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateBranchDto } from './dto/create-branch.dto';
 import { UpdateBranchDto } from './dto/update-branch.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -27,14 +27,24 @@ export class BranchesService {
       customer,
     });
 
-    return await this.branchRepository.save(branch);
+    const { customer: _, ...result } = await this.branchRepository.save(branch);
+
+    return result as Branch;
   }
 
-  findAll() {
-    return `This action returns all branches`;
+  async findOne(id: string): Promise<Branch> {
+    const branch = await this.branchRepository.findOne({
+      where: { id },
+    });
+
+    if (!branch) {
+      throw new NotFoundException(`Branch with ID "${id}" not found`);
+    }
+
+    return branch;
   }
 
-  async findByCustomer(customerId: string, paginationDto: PaginationDto): Promise<{ data: Branch[], meta: object }> {
+  async findByCustomer(customerId: string, paginationDto: PaginationDto) {
     await this.customersService.findOne(customerId);
 
     return await paginate(this.branchRepository, paginationDto, {
@@ -43,11 +53,26 @@ export class BranchesService {
     });
   }
 
-  update(id: number, updateBranchDto: UpdateBranchDto) {
-    return `This action updates a #${id} branch`;
+  async update(id: string, updateBranchDto: UpdateBranchDto): Promise<Branch> {
+    if (Object.keys(updateBranchDto).length === 0) {
+      throw new BadRequestException('No fields provided to update');
+    }
+
+    const branch = await this.branchRepository.preload({
+      id,
+      ...updateBranchDto,
+    });
+
+    if (!branch) {
+      throw new NotFoundException(`Branch with ID "${id}" not found`);
+    }
+
+    return await this.branchRepository.save(branch);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} branch`;
+  async remove(id: string): Promise<{ message: string }> {
+    const branch = await this.findOne(id);
+    await this.branchRepository.softDelete(id);
+    return { message: `Branch ${branch.name} has been deleted` };
   }
 }
