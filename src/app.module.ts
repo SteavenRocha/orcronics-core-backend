@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CommonModule } from './common/common.module';
 import { BranchesModule } from './branches/branches.module';
+import { AreasModule } from './areas/areas.module';
 
 @Module({
   imports: [
@@ -34,6 +35,8 @@ import { BranchesModule } from './branches/branches.module';
     CustomersModule,
 
     BranchesModule,
+
+    AreasModule,
 
   ],
   controllers: [],
