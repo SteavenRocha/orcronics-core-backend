@@ -26,9 +26,11 @@ export class CustomersService {
     });
   }
 
-  // Sin relaciones -> devuelve solo el CUSTOMER
+  // Sin relaciones -> devuelve solo el CUSTOMER con estado ACTIVO
   async findOne(id: string): Promise<Customer> {
-    const customer = await this.customerRepository.findOneBy({ id });
+    const customer = await this.customerRepository.findOne({
+      where: { id, is_active: true },
+    });
 
     if (!customer) {
       throw new NotFoundException(`Customer with ID "${id}" not found`);
@@ -37,7 +39,7 @@ export class CustomersService {
     return customer;
   }
 
-  // Con relaciones -> devuelve el CUSTOMER y sus BRANCHES
+  // Con relaciones -> devuelve el CUSTOMER y sus BRANCHES con estado ACTIVO / INACTIVO
   async findOneWithBranches(id: string): Promise<Customer> {
     const customer = await this.customerRepository.findOne({
       where: { id },
@@ -51,37 +53,55 @@ export class CustomersService {
     return customer;
   }
 
-  async update(id: string, updateCustomerDto: UpdateCustomerDto): Promise<Customer> {
-    if (Object.keys(updateCustomerDto).length === 0) {
-      throw new BadRequestException('No fields provided to update');
-    }
+  // Método privado para verificar el estado del customer
+  private async findByStatus(id: string, isActive: boolean): Promise<Customer> {
+    const exists = await this.customerRepository.findOne({ where: { id } });
 
-    const customer = await this.customerRepository.preload({
-      id,
-      ...updateCustomerDto,
-    });
-
-    if (!customer) {
+    if (!exists) {
       throw new NotFoundException(`Customer with ID "${id}" not found`);
     }
 
-    return await this.customerRepository.save(customer);
+    if (exists.is_active !== isActive) {
+      throw new BadRequestException(
+        `Customer ${exists.name} is already ${exists.is_active ? 'active' : 'inactive'}`
+      );
+    }
+
+    return exists;
   }
 
   async deactivate(id: string): Promise<Customer> {
-    const customer = await this.findOne(id);
+    const customer = await this.findByStatus(id, true);
     customer.is_active = false;
     return await this.customerRepository.save(customer);
   }
 
   async activate(id: string): Promise<Customer> {
-    const customer = await this.findOne(id);
+    const customer = await this.findByStatus(id, false);
     customer.is_active = true;
+    return await this.customerRepository.save(customer);
+  }
+
+  async update(id: string, updateCustomerDto: UpdateCustomerDto): Promise<Customer> {
+    if (Object.keys(updateCustomerDto).length === 0) {
+      throw new BadRequestException('No fields provided to update');
+    }
+
+    const customer = await this.findOne(id);
+
+    Object.assign(customer, updateCustomerDto);
+
     return await this.customerRepository.save(customer);
   }
 
   async remove(id: string): Promise<{ message: string }> {
     const customer = await this.findOneWithBranches(id);
+
+    if (customer.is_active) {
+      customer.is_active = false;
+      await this.customerRepository.save(customer);
+    }
+
     await this.customerRepository.softRemove(customer);
     return { message: `Customer ${customer.name} has been deleted` };
   }
