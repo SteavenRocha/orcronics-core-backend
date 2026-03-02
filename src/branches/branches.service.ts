@@ -44,6 +44,19 @@ export class BranchesService {
     return branch;
   }
 
+  async findOneWithAreas(id: string): Promise<Branch> {
+    const branch = await this.branchRepository.findOne({
+      where: { id },
+      relations: { areas: true },
+    });
+
+    if (!branch) {
+      throw new NotFoundException(`Branch with ID "${id}" not found`);
+    }
+
+    return branch;
+  }
+
   async findByCustomer(customerId: string, paginationDto: PaginationDto) {
     await this.customersService.findOne(customerId);
 
@@ -71,8 +84,8 @@ export class BranchesService {
   }
 
   async remove(id: string): Promise<{ message: string }> {
-    const branch = await this.findOne(id);
-    await this.branchRepository.softDelete(id);
+    const branch = await this.findOneWithAreas(id);
+    await this.branchRepository.softRemove(branch);
     return { message: `Branch ${branch.name} has been deleted` };
   }
 }

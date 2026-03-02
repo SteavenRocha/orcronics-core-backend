@@ -43,7 +43,11 @@ export class CustomersService {
   async findOneWithBranches(id: string): Promise<Customer> {
     const customer = await this.customerRepository.findOne({
       where: { id },
-      relations: { branches: true },
+      relations: {
+        branches: {
+          areas: true
+        }
+      },
     });
 
     if (!customer) {
