@@ -46,10 +46,40 @@ export class AreasService {
   async findByBranch(branchId: string, paginationDto: PaginationDto) {
     await this.branchesService.findOne(branchId);
 
-    return await paginate(this.areaRepository, paginationDto, {
-      where: { branch: { id: branchId } },
-      order: { created_at: 'DESC' },
-    });
+    const { limit = 10, page = 1 } = paginationDto;
+    const offset = (page - 1) * limit;
+
+    const [areas, total] = await this.areaRepository
+      .createQueryBuilder('area')
+      .loadRelationCountAndMap('area.device_count', 'area.devices', 'device',
+        (qb) => qb.where('device.deleted_at IS NULL')
+      )
+      .where('area.branch_id = :branchId', { branchId })
+      .andWhere('area.deleted_at IS NULL')
+      .orderBy('area.created_at', 'DESC')
+      .take(limit)
+      .skip(offset)
+      .getManyAndCount();
+
+    const totalPages = Math.ceil(total / limit);
+
+    if (page > totalPages && total > 0) {
+      throw new BadRequestException(
+        `Page ${page} does not exist. Total pages: ${totalPages}`,
+      );
+    }
+
+    return {
+      data: areas,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    };
   }
 
   async update(id: string, updateAreaDto: UpdateAreaDto): Promise<Area> {
