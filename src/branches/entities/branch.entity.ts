@@ -1,5 +1,6 @@
+import { Area } from "src/areas/entities/area.entity";
 import { Customer } from "src/customers/entities/customer.entity";
-import { Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity('branches')
 export class Branch {
@@ -33,5 +34,10 @@ export class Branch {
     })
     @JoinColumn({ name: 'customer_id' })
     customer: Customer;
+
+    @OneToMany(() => Area, (area) => area.branch, {
+        cascade: true,
+    })
+    areas: Area[];
 
 }
