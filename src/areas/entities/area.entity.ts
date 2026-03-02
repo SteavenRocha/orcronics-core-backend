@@ -1,5 +1,5 @@
 import { Branch } from "src/branches/entities/branch.entity";
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity('areas')
 export class Area {
@@ -13,13 +13,13 @@ export class Area {
     @Column('text', { nullable: true })
     description?: string;
 
-    @Column({ type: 'timestamp' })
+    @CreateDateColumn({ type: 'timestamp' })
     created_at: Date;
 
-    @Column({ type: 'timestamp' })
+    @UpdateDateColumn({ type: 'timestamp' })
     updated_at: Date;
 
-    @Column({ type: 'timestamp' })
+    @DeleteDateColumn({ type: 'timestamp' })
     deleted_at: Date;
 
     @ManyToOne(() => Branch, (branch) => branch.areas, {
