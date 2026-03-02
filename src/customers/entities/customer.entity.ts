@@ -29,5 +29,4 @@ export class Customer {
         cascade: true,
     })
     branches: Branch[];
-
 }

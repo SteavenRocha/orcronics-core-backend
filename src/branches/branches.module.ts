@@ -12,5 +12,6 @@ import { CustomersModule } from 'src/customers/customers.module';
   ],
   controllers: [BranchesController],
   providers: [BranchesService],
+  exports: [BranchesService],
 })
 export class BranchesModule { }
