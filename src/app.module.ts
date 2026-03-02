@@ -5,6 +5,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CommonModule } from './common/common.module';
 import { BranchesModule } from './branches/branches.module';
 import { AreasModule } from './areas/areas.module';
+import { DevicesModule } from './devices/devices.module';
 
 @Module({
   imports: [
@@ -37,6 +38,8 @@ import { AreasModule } from './areas/areas.module';
     BranchesModule,
 
     AreasModule,
+
+    DevicesModule,
 
   ],
   controllers: [],
