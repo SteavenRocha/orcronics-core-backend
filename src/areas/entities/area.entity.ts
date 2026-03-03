@@ -1,5 +1,6 @@
 import { Branch } from "src/branches/entities/branch.entity";
-import { Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Device } from "src/devices/entities/device.entity";
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity('areas')
 export class Area {
@@ -27,4 +28,9 @@ export class Area {
     })
     @JoinColumn({ name: 'branch_id' })
     branch: Branch;
+
+    @OneToMany(() => Device, (device) => device.area, {
+        cascade: true
+    })
+    devices: Device[];
 }

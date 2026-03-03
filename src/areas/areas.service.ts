@@ -6,7 +6,7 @@ import { Area } from './entities/area.entity';
 import { Repository } from 'typeorm';
 import { BranchesService } from 'src/branches/branches.service';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
-import { paginate } from 'src/common/helpers/pagination.helper';
+import { DeviceMetadata } from 'src/devices/entities/device-metadata.entity';
 
 @Injectable()
 export class AreasService {
@@ -14,6 +14,10 @@ export class AreasService {
   constructor(
     @InjectRepository(Area)
     private readonly areaRepository: Repository<Area>,
+
+    @InjectRepository(DeviceMetadata)
+    private readonly metadataRepository: Repository<DeviceMetadata>,
+
     private readonly branchesService: BranchesService,
   ) { }
 
@@ -34,6 +38,21 @@ export class AreasService {
   async findOne(id: string): Promise<Area> {
     const area = await this.areaRepository.findOne({
       where: { id },
+    });
+
+    if (!area) {
+      throw new NotFoundException(`Area with ID "${id}" not found`);
+    }
+
+    return area;
+  }
+
+  async findOneWithDevices(id: string): Promise<Area> {
+    const area = await this.areaRepository.findOne({
+      where: { id },
+      relations: {
+        devices: true,
+      },
     });
 
     if (!area) {
@@ -100,8 +119,16 @@ export class AreasService {
   }
 
   async remove(id: string): Promise<{ message: string }> {
-    const area = await this.findOne(id);
-    await this.areaRepository.softDelete(id);
+    const area = await this.findOneWithDevices(id);
+
+    await this.metadataRepository
+      .createQueryBuilder()
+      .delete()
+      .where('device_id IN (SELECT id FROM devices WHERE area_id = :id)', { id })
+      .execute();
+
+    await this.areaRepository.softRemove(area);
+
     return { message: `Area ${area.name} has been deleted` };
   }
 }
