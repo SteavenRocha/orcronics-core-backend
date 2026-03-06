@@ -118,7 +118,7 @@ export class AreasService {
     return await this.areaRepository.save(area);
   }
 
-  async remove(id: string): Promise<{ message: string }> {
+  async remove(id: string) {
     const area = await this.findOneWithDevices(id);
 
     await this.metadataRepository
@@ -128,7 +128,5 @@ export class AreasService {
       .execute();
 
     await this.areaRepository.softRemove(area);
-
-    return { message: `Area ${area.name} has been deleted` };
   }
 }

@@ -76,11 +76,10 @@ export class DevicesService {
     return await this.deviceRepository.save(device);
   }
 
-  async remove(id: string): Promise<{ message: string }> {
+  async remove(id: string) {
     const device = await this.findOne(id);
     await this.metadataRepository.delete({ device: { id } });
     await this.deviceRepository.softRemove(device);
-    return { message: `Device ${device.name} has been deleted` };
   }
 
   // ==================== METADATA ====================
@@ -116,7 +115,7 @@ export class DevicesService {
     return await this.metadataRepository.save(metadata);
   }
 
-  async removeMetadata(deviceId: string, metadataId: string): Promise<{ message: string }> {
+  async removeMetadata(deviceId: string, metadataId: string) {
     await this.findOne(deviceId);
 
     const metadata = await this.metadataRepository.findOne({
@@ -128,6 +127,5 @@ export class DevicesService {
     }
 
     await this.metadataRepository.delete(metadataId);
-    return { message: `Metadata with ID "${metadata.id}" has been deleted` };
   }
 }

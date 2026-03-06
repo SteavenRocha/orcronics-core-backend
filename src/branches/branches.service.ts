@@ -83,9 +83,8 @@ export class BranchesService {
     return await this.branchRepository.save(branch);
   }
 
-  async remove(id: string): Promise<{ message: string }> {
+  async remove(id: string) {
     const branch = await this.findOneWithAreas(id);
     await this.branchRepository.softRemove(branch);
-    return { message: `Branch ${branch.name} has been deleted` };
   }
 }
