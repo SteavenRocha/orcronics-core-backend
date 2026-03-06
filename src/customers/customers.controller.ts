@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Query
 import { CustomersService } from './customers.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { QueryDto } from 'src/common/dto/query.dto';
 
 @Controller('customers')
 export class CustomersController {
@@ -14,8 +14,8 @@ export class CustomersController {
   }
 
   @Get()
-  findAll(@Query() paginationDto: PaginationDto) {
-    return this.customersService.findAll(paginationDto);
+  findAll(@Query() queryDto: QueryDto) {
+    return this.customersService.findAll(queryDto);
   }
 
   @Patch(':id')

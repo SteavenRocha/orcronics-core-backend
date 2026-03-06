@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Query
 import { BranchesService } from './branches.service';
 import { CreateBranchDto } from './dto/create-branch.dto';
 import { UpdateBranchDto } from './dto/update-branch.dto';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { QueryDto } from 'src/common/dto/query.dto';
 
 @Controller('branches')
 export class BranchesController {
@@ -16,9 +16,9 @@ export class BranchesController {
   @Get('customer/:customerId')
   findByCustomer(
     @Param('customerId', ParseUUIDPipe) customerId: string,
-    @Query() paginationDto: PaginationDto
+    @Query() queryDto: QueryDto
   ) {
-    return this.branchesService.findByCustomer(customerId, paginationDto);
+    return this.branchesService.findByCustomer(customerId, queryDto);
   }
 
   @Patch(':id')

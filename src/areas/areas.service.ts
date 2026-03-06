@@ -5,8 +5,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Area } from './entities/area.entity';
 import { Repository } from 'typeorm';
 import { BranchesService } from 'src/branches/branches.service';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { DeviceMetadata } from 'src/devices/entities/device-metadata.entity';
+import { QueryDto } from 'src/common/dto/query.dto';
 
 @Injectable()
 export class AreasService {
@@ -62,10 +62,10 @@ export class AreasService {
     return area;
   }
 
-  async findByBranch(branchId: string, paginationDto: PaginationDto) {
+  async findByBranch(branchId: string, queryDto: QueryDto) {
     await this.branchesService.findOne(branchId);
 
-    const { limit = 10, page = 1 } = paginationDto;
+    const { limit = 10, page = 1 } = queryDto;
     const offset = (page - 1) * limit;
 
     const [areas, total] = await this.areaRepository

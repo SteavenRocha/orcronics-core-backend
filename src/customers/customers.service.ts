@@ -4,8 +4,8 @@ import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Customer } from './entities/customer.entity';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
-import { paginate } from 'src/common/helpers/pagination.helper';
+import { QueryDto } from 'src/common/dto/query.dto';
+import { query } from 'src/common/helpers/query.helper';
 
 @Injectable()
 export class CustomersService {
@@ -20,10 +20,10 @@ export class CustomersService {
     return await this.customerRepository.save(customer);
   }
 
-  async findAll(paginationDto: PaginationDto) {
-    return await paginate(this.customerRepository, paginationDto, {
+  async findAll(queryDto: QueryDto) {
+    return await query(this.customerRepository, queryDto, {
       order: { created_at: 'DESC' },
-    });
+    }, 'name');
   }
 
   // Sin relaciones -> devuelve solo el CUSTOMER con estado ACTIVO

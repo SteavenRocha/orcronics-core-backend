@@ -2,9 +2,9 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Query
 import { DevicesService } from './devices.service';
 import { CreateDeviceDto } from './dto/create-device.dto';
 import { UpdateDeviceDto } from './dto/update-device.dto';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { CreateDeviceMetadataDto } from './dto/create-device-metadata.dto';
 import { UpdateDeviceMetadataDto } from './dto/update-device-metadata.dto';
+import { QueryDto } from 'src/common/dto/query.dto';
 
 @Controller('devices')
 export class DevicesController {
@@ -20,9 +20,9 @@ export class DevicesController {
   @Get('area/:areaId')
   findByArea(
     @Param('areaId', ParseUUIDPipe) areaId: string,
-    @Query() paginationDto: PaginationDto,
+    @Query() queryDto: QueryDto,
   ) {
-    return this.devicesService.findByArea(areaId, paginationDto);
+    return this.devicesService.findByArea(areaId, queryDto);
   }
 
   @Patch(':id')

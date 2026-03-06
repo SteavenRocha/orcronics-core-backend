@@ -6,10 +6,10 @@ import { Device } from './entities/device.entity';
 import { Repository } from 'typeorm';
 import { AreasService } from 'src/areas/areas.service';
 import { DeviceMetadata } from './entities/device-metadata.entity';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
-import { paginate } from 'src/common/helpers/pagination.helper';
 import { CreateDeviceMetadataDto } from './dto/create-device-metadata.dto';
 import { UpdateDeviceMetadataDto } from './dto/update-device-metadata.dto';
+import { QueryDto } from 'src/common/dto/query.dto';
+import { query } from 'src/common/helpers/query.helper';
 
 @Injectable()
 export class DevicesService {
@@ -56,10 +56,10 @@ export class DevicesService {
     return device;
   }
 
-  async findByArea(areaId: string, paginationDto: PaginationDto) {
+  async findByArea(areaId: string, queryDto: QueryDto) {
     await this.areasService.findOne(areaId);
 
-    return await paginate(this.deviceRepository, paginationDto, {
+    return await query(this.deviceRepository, queryDto, {
       where: { area: { id: areaId } },
       relations: { metadata: true },
       order: { created_at: 'DESC' },

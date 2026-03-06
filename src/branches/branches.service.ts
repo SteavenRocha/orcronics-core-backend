@@ -5,8 +5,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Branch } from './entities/branch.entity';
 import { CustomersService } from 'src/customers/customers.service';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
-import { paginate } from 'src/common/helpers/pagination.helper';
+import { QueryDto } from 'src/common/dto/query.dto';
+import { query } from 'src/common/helpers/query.helper';
 
 @Injectable()
 export class BranchesService {
@@ -57,10 +57,10 @@ export class BranchesService {
     return branch;
   }
 
-  async findByCustomer(customerId: string, paginationDto: PaginationDto) {
+  async findByCustomer(customerId: string, queryDto: QueryDto) {
     await this.customersService.findOne(customerId);
 
-    return await paginate(this.branchRepository, paginationDto, {
+    return await query(this.branchRepository, queryDto, {
       where: { customer: { id: customerId } },
       order: { created_at: 'DESC' },
     });
