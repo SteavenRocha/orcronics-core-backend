@@ -18,6 +18,11 @@ export class CustomersController {
     return this.customersService.findAll(queryDto);
   }
 
+  @Get(':id')
+  finOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.customersService.findOne(id);
+  }
+
   @Patch(':id')
   update(@Param('id', ParseUUIDPipe) id: string, @Body() updateCustomerDto: UpdateCustomerDto) {
     return this.customersService.update(id, updateCustomerDto);
