@@ -46,7 +46,9 @@ export class CustomersService {
       relations: {
         branches: {
           areas: {
-            devices: true
+            devices: {
+              metadata: true
+            }
           }
         }
       },

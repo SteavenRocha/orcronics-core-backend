@@ -13,15 +13,14 @@ export class DeviceMetadata {
     @Column({ type: 'text', nullable: false })
     value: string;
 
-    /* Aplicamos Hard Delete pora ahora */
-    /* @CreateDateColumn({ type: 'timestamp' })
+    @CreateDateColumn({ type: 'timestamp' })
     createdAt: Date;
 
     @UpdateDateColumn({ type: 'timestamp' })
     updatedAt: Date;
 
     @DeleteDateColumn({ type: 'timestamp' })
-    deletedAt: Date; */
+    deletedAt: Date;
 
     @ManyToOne(() => Device, (device) => device.metadata, { nullable: false })
     @JoinColumn({ name: 'device_id' })

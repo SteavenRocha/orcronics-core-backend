@@ -47,7 +47,13 @@ export class BranchesService {
   async findOneWithAreas(id: string): Promise<Branch> {
     const branch = await this.branchRepository.findOne({
       where: { id },
-      relations: { areas: true },
+      relations: {
+        areas: {
+          devices: {
+            metadata: true
+          }
+        }
+      },
     });
 
     if (!branch) {

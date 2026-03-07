@@ -51,7 +51,9 @@ export class AreasService {
     const area = await this.areaRepository.findOne({
       where: { id },
       relations: {
-        devices: true,
+        devices: {
+          metadata: true
+        },
       },
     });
 
@@ -129,11 +131,11 @@ export class AreasService {
   async remove(id: string) {
     const area = await this.findOneWithDevices(id);
 
-    await this.metadataRepository
-      .createQueryBuilder()
-      .delete()
-      .where('device_id IN (SELECT id FROM devices WHERE area_id = :id)', { id })
-      .execute();
+    /*  await this.metadataRepository
+       .createQueryBuilder()
+       .delete()
+       .where('device_id IN (SELECT id FROM devices WHERE area_id = :id)', { id })
+       .execute(); */
 
     await this.areaRepository.softRemove(area);
   }
