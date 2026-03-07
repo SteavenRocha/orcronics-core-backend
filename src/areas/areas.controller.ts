@@ -13,6 +13,11 @@ export class AreasController {
     return this.areasService.create(createAreaDto);
   }
 
+  @Get(':id')
+  finOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.areasService.findOne(id);
+  }
+
   @Get('branch/:branchId')
   findByBranch(
     @Param('branchId', ParseUUIDPipe) branchId: string,

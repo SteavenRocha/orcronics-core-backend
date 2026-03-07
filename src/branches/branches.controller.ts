@@ -13,6 +13,11 @@ export class BranchesController {
     return this.branchesService.create(createBranchDto);
   }
 
+  @Get(':id')
+  finOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.branchesService.findOne(id);
+  }
+
   @Get('customer/:customerId')
   findByCustomer(
     @Param('customerId', ParseUUIDPipe) customerId: string,
