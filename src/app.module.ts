@@ -6,6 +6,7 @@ import { CommonModule } from './common/common.module';
 import { BranchesModule } from './branches/branches.module';
 import { AreasModule } from './areas/areas.module';
 import { DevicesModule } from './devices/devices.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -40,6 +41,8 @@ import { DevicesModule } from './devices/devices.module';
     AreasModule,
 
     DevicesModule,
+
+    UsersModule,
 
   ],
   controllers: [],
