@@ -63,7 +63,7 @@ export class DevicesService {
       where: { area: { id: areaId } },
       relations: { metadata: true },
       order: { created_at: 'DESC' },
-    });
+    }, 'name');
   }
 
   async update(id: string, updateDeviceDto: UpdateDeviceDto): Promise<Device> {

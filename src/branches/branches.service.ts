@@ -63,7 +63,7 @@ export class BranchesService {
     return await query(this.branchRepository, queryDto, {
       where: { customer: { id: customerId } },
       order: { created_at: 'DESC' },
-    });
+    }, 'name');
   }
 
   async update(id: string, updateBranchDto: UpdateBranchDto): Promise<Branch> {

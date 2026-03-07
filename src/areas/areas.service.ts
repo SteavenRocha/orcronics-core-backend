@@ -62,13 +62,14 @@ export class AreasService {
     return area;
   }
 
+  /* Para obtener el device_count */
   async findByBranch(branchId: string, queryDto: QueryDto) {
     await this.branchesService.findOne(branchId);
 
-    const { limit = 10, page = 1 } = queryDto;
+    const { limit = 10, page = 1, search } = queryDto;
     const offset = (page - 1) * limit;
 
-    const [areas, total] = await this.areaRepository
+    const queryBuilder = this.areaRepository
       .createQueryBuilder('area')
       .loadRelationCountAndMap('area.device_count', 'area.devices', 'device',
         (qb) => qb.where('device.deleted_at IS NULL')
@@ -77,8 +78,15 @@ export class AreasService {
       .andWhere('area.deleted_at IS NULL')
       .orderBy('area.created_at', 'DESC')
       .take(limit)
-      .skip(offset)
-      .getManyAndCount();
+      .skip(offset);
+
+    if (search) {
+      queryBuilder.andWhere('area.name ILIKE :search', {
+        search: `%${search}%`,
+      });
+    }
+
+    const [areas, total] = await queryBuilder.getManyAndCount();
 
     const totalPages = Math.ceil(total / limit);
 

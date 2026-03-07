@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { IsInt, IsOptional, IsPositive, IsString, Max, Min } from 'class-validator';
 
 export class QueryDto {
@@ -21,6 +21,7 @@ export class QueryDto {
     /* Busqueda */
     @IsString()
     @IsOptional()
+    @Transform(({ value }) => value?.trim())
     search?: string;
 
 }
