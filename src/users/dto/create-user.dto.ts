@@ -1,20 +1,33 @@
-import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, MinLength, } from 'class-validator';
-import { UserRole } from '../entities/user.entity';
+import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, Matches, MaxLength, MinLength, } from 'class-validator';
+import { Role } from '../../common/enums/role.enum';
 
 export class CreateUserDto {
+
     @IsString()
     @IsNotEmpty()
-    username: string;
+    @MaxLength(255)
+    first_name: string;
 
-    /* @IsEmail()
+    @IsString()
     @IsNotEmpty()
-    email: string; */
+    @MaxLength(255)
+    last_name: string;
+
+    @IsEmail()
+    @IsNotEmpty()
+    @MaxLength(150)
+    email: string;
 
     @IsString()
     @MinLength(8, { message: 'The password must have at least 8 characters' })
+    @MaxLength(64)
+    @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/, {
+        message:
+            'password must contain uppercase, lowercase, number and special character',
+    })
     password: string;
 
-    @IsEnum(UserRole)
+    @IsEnum(Role)
     @IsOptional()
-    role?: UserRole;
+    role?: Role;
 }

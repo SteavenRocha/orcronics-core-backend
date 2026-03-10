@@ -1,7 +1,6 @@
 import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { LoginDto } from './dto/login.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
@@ -15,21 +14,21 @@ export class UsersService {
     private usersRepository: Repository<User>,
   ) { }
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
-
+  async create(createUserDto: CreateUserDto): Promise<Omit<User, 'password_hash' | 'refresh_token_hash'>> {
     const existing = await this.usersRepository.findOne({
-      where: [{ username: createUserDto.username }],
+      where: { email: createUserDto.email },
+      withDeleted: true,
     });
 
     if (existing) {
-      throw new ConflictException('User already exists');
+      throw new ConflictException('email already in use');
     }
 
     const password_hash = await bcrypt.hash(createUserDto.password, 10);
 
     const user = this.usersRepository.create({
       ...createUserDto,
-      password_hash,
+      password_hash
     });
 
     const saved = await this.usersRepository.save(user);
@@ -37,26 +36,13 @@ export class UsersService {
     return this.sanitize(saved);
   }
 
-  async login(loginDto: LoginDto): Promise<Omit<User, 'password_hash'>> {
-    const user = await this.usersRepository.findOne({
-      where: [{ username: loginDto.username }],
-    });
-
-    if (!user || !user.is_active) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    const isMatch = await bcrypt.compare(loginDto.password, user.password_hash);
-
-    if (!isMatch) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    return this.sanitize(user);
+  // Uso interno (auth) — retorna la entidad completa con hash
+  async findByEmail(email: string): Promise<User | null> {
+    return this.usersRepository.findOne({ where: { email, is_active: true } });
   }
 
-  private sanitize(user: User): User {
-    const { password_hash, ...clean } = user as any;
-    return clean;
+  private sanitize(user: User): Omit<User, 'password_hash' | 'refresh_token_hash'> {
+    const { password_hash, refresh_token_hash, ...safe } = user;
+    return safe;
   }
 }
