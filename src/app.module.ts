@@ -7,6 +7,7 @@ import { BranchesModule } from './branches/branches.module';
 import { AreasModule } from './areas/areas.module';
 import { DevicesModule } from './devices/devices.module';
 import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -43,6 +44,8 @@ import { UsersModule } from './users/users.module';
     DevicesModule,
 
     UsersModule,
+
+    AuthModule,
 
   ],
   controllers: [],
