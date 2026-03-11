@@ -36,9 +36,22 @@ export class UsersService {
     return this.sanitize(saved);
   }
 
+  async findById(id: string): Promise<User | null> {
+    return this.usersRepository.findOneBy({ id })
+  }
+
   // Uso interno (auth) — retorna la entidad completa con hash
   async findByEmail(email: string): Promise<User | null> {
-    return this.usersRepository.findOne({ where: { email, is_active: true } });
+    return this.usersRepository.findOne
+      ({
+        where: { email, is_active: true }
+      });
+  }
+
+  // Usado por AuthService para guardar/limpiar refresh token
+  async updateRefreshToken(id: string, token: string | null): Promise<void> {
+    const hash = token ? await bcrypt.hash(token, 10) : null;
+    await this.usersRepository.update(id, { refresh_token_hash: hash });
   }
 
   private sanitize(user: User): Omit<User, 'password_hash' | 'refresh_token_hash'> {

@@ -8,6 +8,9 @@ import { AreasModule } from './areas/areas.module';
 import { DevicesModule } from './devices/devices.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { RolesGuard } from './auth/guards/roles.guard';
 
 @Module({
   imports: [
@@ -27,7 +30,7 @@ import { AuthModule } from './auth/auth.module';
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_NAME'),
         autoLoadEntities: true,
-        synchronize: true // No usar en producción - Cambiar a false
+        synchronize: process.env.NODE_ENV !== 'production', // No usar en producción - Cambiar a false
       }),
 
       inject: [ConfigService],
@@ -49,6 +52,15 @@ import { AuthModule } from './auth/auth.module';
 
   ],
   controllers: [],
-  providers: [],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
+  ],
 })
 export class AppModule { }
