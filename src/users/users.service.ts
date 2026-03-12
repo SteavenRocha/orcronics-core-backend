@@ -75,7 +75,7 @@ export class UsersService {
   async findAll(queryDto: QueryDto) {
     const result = await query(this.usersRepository, queryDto, {
       order: { created_at: 'DESC' },
-    });
+    }, 'first_name');
 
     return {
       ...result,
