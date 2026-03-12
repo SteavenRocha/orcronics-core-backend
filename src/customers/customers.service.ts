@@ -112,5 +112,4 @@ export class CustomersService {
 
     await this.customerRepository.softRemove(customer);
   }
-
 }

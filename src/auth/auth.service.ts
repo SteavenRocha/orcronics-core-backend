@@ -42,7 +42,7 @@ export class AuthService {
 
     async validateRefreshToken(user_id: string, refresh_token: string): Promise<User> {
         const user = await this.usersService.findById(user_id);
-        if (!user || !user.refresh_token_hash) throw new UnauthorizedException();
+        if (!user || !user.refresh_token_hash || !user.is_active) throw new UnauthorizedException();
 
         const is_valid = await bcrypt.compare(refresh_token, user.refresh_token_hash);
         if (!is_valid) throw new UnauthorizedException();

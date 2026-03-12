@@ -3,15 +3,12 @@ import { CustomersService } from './customers.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { QueryDto } from 'src/common/dto/query.dto';
-import { Roles } from 'src/auth/decorators/roles.decorator';
-import { Role } from 'src/common/enums/role.enum';
 
 @Controller('customers')
 export class CustomersController {
   constructor(private readonly customersService: CustomersService) { }
 
   @Post()
-  @Roles(Role.ADMIN)
   create(@Body() createCustomerDto: CreateCustomerDto) {
     return this.customersService.create(createCustomerDto);
   }
