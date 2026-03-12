@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { sanitizeUser } from 'src/common/helpers/sanitize-user.helper';
 
 @Injectable()
 export class UsersService {
@@ -33,7 +34,7 @@ export class UsersService {
 
     const saved = await this.usersRepository.save(user);
 
-    return this.sanitize(saved);
+    return sanitizeUser(saved);
   }
 
   async findById(id: string): Promise<User | null> {
@@ -52,10 +53,5 @@ export class UsersService {
   async updateRefreshToken(id: string, token: string | null): Promise<void> {
     const hash = token ? await bcrypt.hash(token, 10) : null;
     await this.usersRepository.update(id, { refresh_token_hash: hash });
-  }
-
-  private sanitize(user: User): Omit<User, 'password_hash' | 'refresh_token_hash'> {
-    const { password_hash, refresh_token_hash, ...safe } = user;
-    return safe;
   }
 }
