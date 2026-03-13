@@ -30,7 +30,7 @@ import { RolesGuard } from './auth/guards/roles.guard';
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_NAME'),
         autoLoadEntities: true,
-        synchronize: process.env.NODE_ENV !== 'production', // No usar en producción - Cambiar a false
+        synchronize: true, // No usar en producción - Cambiar a false
       }),
 
       inject: [ConfigService],
