@@ -1,4 +1,5 @@
 import { Branch } from "src/branches/entities/branch.entity";
+import { Subscription } from "src/subscriptions/entities/subscription.entity";
 import { Column, CreateDateColumn, DeleteDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity('customers')
@@ -29,4 +30,7 @@ export class Customer {
         cascade: true,
     })
     branches: Branch[];
+
+    @OneToMany(() => Subscription, (subscription) => subscription.customer)
+    subscriptions: Subscription[];
 }

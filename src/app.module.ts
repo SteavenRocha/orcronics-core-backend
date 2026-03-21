@@ -11,6 +11,8 @@ import { AuthModule } from './auth/auth.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
+import { IntegrationsModule } from './integrations/integrations.module';
+import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 
 @Module({
   imports: [
@@ -30,7 +32,7 @@ import { RolesGuard } from './auth/guards/roles.guard';
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_NAME'),
         autoLoadEntities: true,
-        synchronize: true, // No usar en producción - Cambiar a false
+        synchronize: process.env.NODE_ENV !== 'production', // No usar en producción - Cambiar a false
       }),
 
       inject: [ConfigService],
@@ -49,6 +51,10 @@ import { RolesGuard } from './auth/guards/roles.guard';
     UsersModule,
 
     AuthModule,
+
+    IntegrationsModule,
+
+    SubscriptionsModule,
 
   ],
   controllers: [],
