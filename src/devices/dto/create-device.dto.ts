@@ -34,7 +34,7 @@ export class CreateDeviceDto {
 
     @IsString()
     @IsNotEmpty()
-    area_id: string;
+    areaId: string;
 
     @IsArray()
     @IsOptional()

@@ -1,81 +1,66 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { User } from './entities/user.entity';
-import { Repository } from 'typeorm';
-import * as bcrypt from 'bcrypt';
-import { sanitizeUser } from 'src/common/helpers/sanitize-user.helper';
-import { QueryDto } from 'src/common/dto/query.dto';
-import { query } from 'src/common/helpers/query.helper';
+import { sanitizeUser } from '../common/helpers/sanitize-user.helper';
+import { BuildQueryDto } from '../common/dto/build-query.dto';
+import { paginate } from '../common/helpers/paginator.helper';
+import { PrismaService } from '../prisma/prisma.service';
+import { HashUtils } from '../common/utils/hash.util';
+import { User, UserRole } from '../generated/prisma/client';
 
 @Injectable()
 export class UsersService {
 
-  constructor(
-    @InjectRepository(User)
-    private usersRepository: Repository<User>,
-  ) { }
+  constructor(private readonly prisma: PrismaService) { }
 
+  async create(createUserDto: CreateUserDto) {
 
-  async create(createUserDto: CreateUserDto): Promise<Omit<User, 'password_hash' | 'refresh_token_hash'>> {
-    const existing = await this.usersRepository.findOne({
-      where: { email: createUserDto.email },
-      withDeleted: true,
+    const passwordHash = await HashUtils.hash(createUserDto.password);
+
+    const saved = await this.prisma.user.create({
+      data: {
+        firstName: createUserDto.firstName,
+        lastName: createUserDto.lastName,
+        email: createUserDto.email,
+        passwordHash: passwordHash,
+        role: createUserDto.role as UserRole,
+        isActive: true,
+      },
     });
-
-    if (existing) {
-      throw new ConflictException('email already in use');
-    }
-
-    const password_hash = await bcrypt.hash(createUserDto.password, 10);
-
-    const user = this.usersRepository.create({
-      ...createUserDto,
-      password_hash
-    });
-
-    const saved = await this.usersRepository.save(user);
 
     return sanitizeUser(saved);
   }
 
-  // privado — para uso interno del service
-  private async findOneRaw(id: string): Promise<User> {
-    const user = await this.usersRepository.findOne({
-      where: { id, is_active: true },
+  async findOne(id: string) {
+    const user = await this.prisma.user.findFirstOrThrow({
+      where: {
+        id,
+        deletedAt: null,
+        isActive: true
+      },
     });
 
-    if (!user) {
-      throw new NotFoundException(`User with ID "${id}" not found`);
-    }
-
-    return user;
+    return sanitizeUser(user);
   }
 
-  // Sin relaciones -> devuelve solo el USER con estado ACTIVO
-  // público — para controllers
-  async findOne(id: string) {
-    return sanitizeUser(await this.findOneRaw(id));
-  }
+  async findAll(buildQueryDto: BuildQueryDto) {
+    const { search } = buildQueryDto;
 
-  // Uso interno (auth) — retorna la entidad completa con estados inactivos
-  async findById(id: string): Promise<User | null> {
-    return this.usersRepository.findOneBy({ id })
-  }
+    const where = {
+      deletedAt: null,
+      ...(search && {
+        OR: [
+          { firstName: { contains: search, mode: 'insensitive' } },
+          { lastName: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } },
+        ],
+      }),
+    };
 
-  // Uso interno (auth) — retorna la entidad completa con hash
-  async findByEmail(email: string): Promise<User | null> {
-    return this.usersRepository.findOne
-      ({
-        where: { email, is_active: true }
-      });
-  }
-
-  async findAll(queryDto: QueryDto) {
-    const result = await query(this.usersRepository, queryDto, {
-      order: { created_at: 'DESC' },
-    }, 'first_name');
+    const result = await paginate<User>(this.prisma.user, buildQueryDto, {
+      where,
+      orderBy: { createdAt: 'desc' },
+    });
 
     return {
       ...result,
@@ -83,66 +68,84 @@ export class UsersService {
     };
   }
 
-  // Método privado para verificar el estado del user
-  private async findByStatus(id: string, isActive: boolean): Promise<User> {
-    const exists = await this.usersRepository.findOne({ where: { id } });
-
-    if (!exists) {
-      throw new NotFoundException(`User with ID "${id}" not found`);
-    }
-
-    if (exists.is_active !== isActive) {
-      throw new BadRequestException(
-        `User ${exists.first_name} ${exists.last_name} is already ${exists.is_active ? 'active' : 'inactive'}`
-      );
-    }
-
-    return exists;
-  }
-
-  async deactivate(id: string): Promise<Omit<User, 'password_hash' | 'refresh_token_hash'>> {
-    const user = await this.findByStatus(id, true);
-    user.is_active = false;
-    return sanitizeUser(await this.usersRepository.save(user));
-  }
-
-  async activate(id: string): Promise<Omit<User, 'password_hash' | 'refresh_token_hash'>> {
-    const user = await this.findByStatus(id, false);
-    user.is_active = true;
-    return sanitizeUser(await this.usersRepository.save(user));
-  }
-
   async update(id: string, updateUserDto: UpdateUserDto & { password?: string }) {
     if (Object.keys(updateUserDto).length === 0) {
       throw new BadRequestException('No fields provided to update');
     }
 
-    const user = await this.findOneRaw(id);
-    const { password, ...rest } = updateUserDto
-
-    Object.assign(user, rest);
+    const { password, ...rest } = updateUserDto;
+    const data: any = {
+      firstName: rest.firstName,
+      lastName: rest.lastName,
+      email: rest.email,
+      role: rest.role,
+    };
 
     if (password) {
-      user.password_hash = await bcrypt.hash(password, 10)
+      data.passwordHash = await HashUtils.hash(password);
     }
 
-    return sanitizeUser(await this.usersRepository.save(user));
+    const updated = await this.prisma.user.update({
+      where: {
+        id,
+        deletedAt: null,
+        isActive: true
+      },
+      data,
+    });
+
+    return sanitizeUser(updated);
   }
 
-  async remove(id: string) {
-    const user = await this.findOneRaw(id);
+  async updateStatus(id: string, isActive: boolean) {
+    const user = await this.prisma.user.findFirstOrThrow({
+      where: {
+        id,
+        deletedAt: null
+      }
+    });
 
-    if (user.is_active) {
-      user.is_active = false;
-      await this.usersRepository.save(user);
+    if (user.isActive === isActive) {
+      throw new BadRequestException(`User is already ${isActive ? 'active' : 'inactive'}`);
     }
 
-    await this.usersRepository.softRemove(user);
+    await this.prisma.user.update({
+      where: { id },
+      data: { isActive },
+    });
   }
 
-  // Usado por AuthService para guardar/limpiar refresh token
+  async remove(id: string): Promise<void> {
+    await this.prisma.user.update({
+      where: {
+        id,
+        deletedAt: null
+      },
+      data: {
+        isActive: false,
+        deletedAt: new Date(),
+      },
+    });
+  }
+
+  /* AUTH */
+  async findById(id: string): Promise<User | null> {
+    return this.prisma.user.findUnique({
+      where: { id, deletedAt: null },
+    });
+  }
+
+  async findByEmail(email: string): Promise<User | null> {
+    return this.prisma.user.findFirst({
+      where: { email, isActive: true, deletedAt: null },
+    });
+  }
+
   async updateRefreshToken(id: string, token: string | null): Promise<void> {
-    const hash = token ? await bcrypt.hash(token, 10) : null;
-    await this.usersRepository.update(id, { refresh_token_hash: hash });
+    const hash = token ? await HashUtils.hash(token) : null;
+    await this.prisma.user.update({
+      where: { id },
+      data: { refreshTokenHash: hash },
+    });
   }
 }

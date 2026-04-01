@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Query
 import { BranchesService } from './branches.service';
 import { CreateBranchDto } from './dto/create-branch.dto';
 import { UpdateBranchDto } from './dto/update-branch.dto';
-import { QueryDto } from 'src/common/dto/query.dto';
+import { BuildQueryDto } from '../common/dto/build-query.dto';
 
 @Controller('branches')
 export class BranchesController {
@@ -13,21 +13,24 @@ export class BranchesController {
     return this.branchesService.create(createBranchDto);
   }
 
+  @Get(':customerId/branches')
+  findByCustomer(
+    @Param('customerId', ParseUUIDPipe) customerId: string,
+    @Query() buildQueryDto: BuildQueryDto
+  ) {
+    return this.branchesService.findAllByCustomer(customerId, buildQueryDto);
+  }
+
   @Get(':id')
   finOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.branchesService.findOne(id);
   }
 
-  @Get('customer/:customerId')
-  findByCustomer(
-    @Param('customerId', ParseUUIDPipe) customerId: string,
-    @Query() queryDto: QueryDto
-  ) {
-    return this.branchesService.findByCustomer(customerId, queryDto);
-  }
-
   @Patch(':id')
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() updateBranchDto: UpdateBranchDto) {
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateBranchDto: UpdateBranchDto
+  ) {
     return this.branchesService.update(id, updateBranchDto);
   }
 

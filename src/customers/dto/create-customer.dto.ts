@@ -10,6 +10,5 @@ export class CreateCustomerDto {
 
     @IsUrl()
     @IsOptional()
-    logo_url?: string;
-
+    logoUrl?: string;
 }

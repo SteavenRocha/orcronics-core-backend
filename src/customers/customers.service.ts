@@ -1,49 +1,56 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Customer } from './entities/customer.entity';
-import { QueryDto } from 'src/common/dto/query.dto';
-import { query } from 'src/common/helpers/query.helper';
+import { PrismaService } from '../prisma/prisma.service';
+import { Customer } from '../generated/prisma/client';
+import { BuildQueryDto } from '../common/dto/build-query.dto';
+import { paginate } from '../common/helpers/paginator.helper';
 
 @Injectable()
 export class CustomersService {
 
-  constructor(
-    @InjectRepository(Customer)
-    private readonly customerRepository: Repository<Customer>,
-  ) { }
+  constructor(private readonly prisma: PrismaService) { }
 
   async create(createCustomerDto: CreateCustomerDto): Promise<Customer> {
-    const customer = this.customerRepository.create(createCustomerDto);
-    return await this.customerRepository.save(customer);
+    return await this.prisma.customer.create({
+      data: createCustomerDto,
+    });
   }
 
-  async findAll(queryDto: QueryDto) {
-    return await query(this.customerRepository, queryDto, {
-      order: { created_at: 'DESC' },
-    }, 'name');
-  }
+  async findAll(buildQueryDto: BuildQueryDto) {
+    const { search } = buildQueryDto;
 
-  // Sin relaciones -> devuelve solo el CUSTOMER con estado ACTIVO
-  async findOne(id: string): Promise<Customer> {
-    const customer = await this.customerRepository.findOne({
-      where: { id, is_active: true },
+    const where = {
+      deletedAt: null,
+      ...(search && {
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+        ],
+      }),
+    };
+
+    const result = await paginate<Customer>(this.prisma.customer, buildQueryDto, {
+      where,
+      orderBy: { createdAt: 'desc' },
     });
 
-    if (!customer) {
-      throw new NotFoundException(`Customer with ID "${id}" not found`);
-    }
-
-    return customer;
+    return result;
   }
 
-  // Con relaciones -> devuelve el CUSTOMER y sus relaciones con estado ACTIVO / INACTIVO
-  async findOneWithBranches(id: string): Promise<Customer> {
-    const customer = await this.customerRepository.findOne({
+  async findOne(id: string): Promise<Customer> {
+    return await this.prisma.customer.findFirstOrThrow({
+      where: {
+        id,
+        isActive: true,
+        deletedAt: null
+      },
+    });
+  }
+
+  /* async findOneWithBranches(id: string): Promise<Customer> {
+    const customer = await this.prisma.customer.findFirstOrThrow({
       where: { id },
-      relations: {
+      include: {
         branches: {
           areas: {
             devices: {
@@ -59,57 +66,50 @@ export class CustomersService {
     }
 
     return customer;
-  }
+  } */
 
-  // Método privado para verificar el estado del customer
-  private async findByStatus(id: string, isActive: boolean): Promise<Customer> {
-    const exists = await this.customerRepository.findOne({ where: { id } });
-
-    if (!exists) {
-      throw new NotFoundException(`Customer with ID "${id}" not found`);
-    }
-
-    if (exists.is_active !== isActive) {
-      throw new BadRequestException(
-        `Customer ${exists.name} is already ${exists.is_active ? 'active' : 'inactive'}`
-      );
-    }
-
-    return exists;
-  }
-
-  async deactivate(id: string): Promise<Customer> {
-    const customer = await this.findByStatus(id, true);
-    customer.is_active = false;
-    return await this.customerRepository.save(customer);
-  }
-
-  async activate(id: string): Promise<Customer> {
-    const customer = await this.findByStatus(id, false);
-    customer.is_active = true;
-    return await this.customerRepository.save(customer);
-  }
-
-  async update(id: string, updateCustomerDto: UpdateCustomerDto): Promise<Customer> {
+  async update(id: string, updateCustomerDto: UpdateCustomerDto) {
     if (Object.keys(updateCustomerDto).length === 0) {
       throw new BadRequestException('No fields provided to update');
     }
 
-    const customer = await this.findOne(id);
-
-    Object.assign(customer, updateCustomerDto);
-
-    return await this.customerRepository.save(customer);
+    return await this.prisma.customer.update({
+      where: {
+        id,
+        deletedAt: null
+      },
+      data: updateCustomerDto,
+    });
   }
 
-  async remove(id: string) {
-    const customer = await this.findOneWithBranches(id);
+  async updateStatus(id: string, isActive: boolean) {
+    const customer = await this.prisma.customer.findFirstOrThrow({
+      where: {
+        id,
+        deletedAt: null
+      }
+    });
 
-    if (customer.is_active) {
-      customer.is_active = false;
-      await this.customerRepository.save(customer);
+    if (customer.isActive === isActive) {
+      throw new BadRequestException(`Customer is already ${isActive ? 'active' : 'inactive'}`);
     }
 
-    await this.customerRepository.softRemove(customer);
+    await this.prisma.customer.update({
+      where: { id },
+      data: { isActive },
+    });
+  }
+
+  async remove(id: string): Promise<void> {
+    await this.prisma.customer.update({
+      where: {
+        id,
+        deletedAt: null
+      },
+      data: {
+        isActive: false,
+        deletedAt: new Date(),
+      },
+    });
   }
 }

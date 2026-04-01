@@ -3,9 +3,9 @@ import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import * as bcrypt from 'bcrypt';
-import { User } from 'src/users/entities/user.entity';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
+import { HashUtils } from '../common/utils/hash.util';
+import { User } from '../generated/prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -17,35 +17,51 @@ export class AuthService {
     ) { }
 
     async login(loginDto: LoginDto) {
-
         const user = await this.usersService.findByEmail(loginDto.email);
-        if (!user) throw new UnauthorizedException('invalid credentials');
 
-        const is_valid = await bcrypt.compare(loginDto.password, user.password_hash);
-        if (!is_valid) throw new UnauthorizedException('invalid credentials');
+        if (!user || user.deletedAt) {
+            throw new UnauthorizedException('Invalid credentials');
+        }
+
+        if (!user.isActive) {
+            throw new UnauthorizedException('User is inactive');
+        }
+
+        const passwordValid = await HashUtils.compare(loginDto.password, user.passwordHash);
+        if (!passwordValid) {
+            throw new UnauthorizedException('Invalid credentials');
+        }
 
         const tokens = await this.generateTokens(user);
-        await this.usersService.updateRefreshToken(user.id, tokens.refresh_token);
+        const hashedRefreshToken = await HashUtils.hash(tokens.refreshToken);
+        await this.usersService.updateRefreshToken(user.id, hashedRefreshToken);
 
-        return tokens;
+        return {
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
+        };
+    }
+
+    async logout(userId: string): Promise<void> {
+        await this.usersService.updateRefreshToken(userId, null);
     }
 
     async refresh(user: User) {
         const tokens = await this.generateTokens(user);
-        await this.usersService.updateRefreshToken(user.id, tokens.refresh_token);
+        const hashedRefreshToken = await HashUtils.hash(tokens.refreshToken);
+        await this.usersService.updateRefreshToken(user.id, hashedRefreshToken);
         return tokens;
     }
 
-    async logout(user_id: string): Promise<void> {
-        await this.usersService.updateRefreshToken(user_id, null);
-    }
+    async validateRefreshToken(userId: string, refreshToken: string): Promise<User> {
+        const user = await this.usersService.findById(userId);
 
-    async validateRefreshToken(user_id: string, refresh_token: string): Promise<User> {
-        const user = await this.usersService.findById(user_id);
-        if (!user || !user.refresh_token_hash || !user.is_active) throw new UnauthorizedException();
+        if (!user || !user.refreshTokenHash || !user.isActive || user.deletedAt) {
+            throw new UnauthorizedException('Access denied');
+        }
 
-        const is_valid = await bcrypt.compare(refresh_token, user.refresh_token_hash);
-        if (!is_valid) throw new UnauthorizedException();
+        const isValid = await HashUtils.compare(refreshToken, user.refreshTokenHash);
+        if (!isValid) throw new UnauthorizedException('Refresh token invalid');
 
         return user;
     }
@@ -57,7 +73,7 @@ export class AuthService {
             role: user.role,
         };
 
-        const [access_token, refresh_token] = await Promise.all([
+        const [accessToken, refreshToken] = await Promise.all([
             this.jwtService.signAsync(payload, {
                 secret: this.configService.getOrThrow<string>('JWT_SECRET'),
                 expiresIn: this.configService.getOrThrow<string>('JWT_ACCESS_EXPIRES') as JwtSignOptions['expiresIn'],
@@ -68,6 +84,9 @@ export class AuthService {
             }),
         ]);
 
-        return { access_token, refresh_token };
+        return {
+            accessToken,
+            refreshToken
+        };
     }
 }

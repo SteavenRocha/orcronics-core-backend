@@ -17,11 +17,11 @@ export class RolesGuard implements CanActivate {
         const { user } = context.switchToHttp().getRequest();
 
         if (!user)
-            throw new InternalServerErrorException('user not found in request');
+            throw new InternalServerErrorException('User not found in request');
 
         if (!required_roles.includes(user.role))
             throw new ForbiddenException(
-                `user requires one of these roles: [${required_roles.join(', ')}]`
+                `User requires one of these roles: [${required_roles.join(', ')}]`
             );
 
         return true;

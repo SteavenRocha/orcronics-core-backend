@@ -16,15 +16,15 @@ export class CreateBranchDto {
     @IsString()
     @MinLength(1)
     @MaxLength(255)
-    contact_name?: string;
+    contactName?: string;
 
     @IsOptional()
     @IsString()
     @MinLength(9)
     @MaxLength(20)
-    contact_phone?: string;
+    contactPhone?: string;
 
     @IsUUID()
     @IsNotEmpty()
-    customer_id: string;
+    customerId: string;
 }

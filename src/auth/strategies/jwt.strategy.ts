@@ -1,11 +1,10 @@
 import { ConfigService } from "@nestjs/config";
 import { PassportStrategy } from "@nestjs/passport";
 import { ExtractJwt, Strategy } from "passport-jwt";
-import { UsersService } from "src/users/users.service";
+import { UsersService } from "../../users/users.service";
 import { JwtPayload } from "../interfaces/jwt-payload.interface";
-import { User } from "src/users/entities/user.entity";
 import { Injectable, UnauthorizedException } from "@nestjs/common";
-import { sanitizeUser } from "src/common/helpers/sanitize-user.helper";
+import { sanitizeUser } from "../../common/helpers/sanitize-user.helper";
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -20,14 +19,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         });
     }
 
-    async validate(payload: JwtPayload): Promise<Omit<User, 'password_hash' | 'refresh_token_hash'>> {
+    async validate(payload: JwtPayload) {
         const user = await this.usersService.findById(payload.sub);
 
-        if (!user)
-            throw new UnauthorizedException('invalid token');
-
-        if (!user.is_active)
-            throw new UnauthorizedException('user is inactive, contact an administrator');
+        if (!user || !user.isActive || user.deletedAt) {
+            throw new UnauthorizedException('User is inactive or not found');
+        }
 
         return sanitizeUser(user);
     }

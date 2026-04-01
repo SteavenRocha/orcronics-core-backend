@@ -1,7 +1,7 @@
 import { Transform, Type } from 'class-transformer';
 import { IsInt, IsOptional, IsPositive, IsString, Max, Min } from 'class-validator';
 
-export class QueryDto {
+export class BuildQueryDto {
 
     /* Paginacion */
     @IsInt()
@@ -23,5 +23,4 @@ export class QueryDto {
     @IsOptional()
     @Transform(({ value }) => value?.trim())
     search?: string;
-
 }

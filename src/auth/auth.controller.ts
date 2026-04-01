@@ -1,10 +1,10 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { Public } from './decorators/public.decorator';
-import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
-import { User } from 'src/users/entities/user.entity';
+import { Refresh } from './decorators/refresh.decorator';
+import type { User } from '../generated/prisma/client';
 
 @Controller('auth')
 export class AuthController {
@@ -25,8 +25,7 @@ export class AuthController {
         return user;
     }
 
-    @Public()
-    @UseGuards(JwtRefreshGuard)
+    @Refresh()
     @Post('refresh')
     @HttpCode(HttpStatus.OK)
     refresh(@CurrentUser() user: User) {
@@ -35,7 +34,7 @@ export class AuthController {
 
     @Post('logout')
     @HttpCode(HttpStatus.NO_CONTENT)
-    logout(@CurrentUser() user: User) {
-        return this.authService.logout(user.id);
+    logout(@CurrentUser('id') userId: string) {
+        return this.authService.logout(userId);
     }
 }

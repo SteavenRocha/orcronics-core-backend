@@ -2,8 +2,9 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { QueryDto } from 'src/common/dto/query.dto';
-import { Public } from 'src/auth/decorators/public.decorator';
+import { BuildQueryDto } from '../common/dto/build-query.dto';
+import { Public } from '../auth/decorators/public.decorator';
+import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 
 @Controller('users')
 export class UsersController {
@@ -16,8 +17,8 @@ export class UsersController {
   }
 
   @Get()
-  findAll(@Query() queryDto: QueryDto) {
-    return this.usersService.findAll(queryDto);
+  findAll(@Query() buildQueryDto: BuildQueryDto) {
+    return this.usersService.findAll(buildQueryDto);
   }
 
   @Get(':id')
@@ -26,18 +27,19 @@ export class UsersController {
   }
 
   @Patch(':id')
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() updateUserDto: UpdateUserDto) {
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(id, updateUserDto);
   }
 
-  @Patch('deactivate/:id')
-  deactivate(@Param('id', ParseUUIDPipe) id: string) {
-    return this.usersService.deactivate(id);
-  }
-
-  @Patch('activate/:id')
-  activate(@Param('id', ParseUUIDPipe) id: string) {
-    return this.usersService.activate(id);
+  @Patch(':id/status')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  updateStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateUserStatusDto: UpdateUserStatusDto,
+  ) {
+    return this.usersService.updateStatus(id, updateUserStatusDto.isActive);
   }
 
   @Delete(':id')

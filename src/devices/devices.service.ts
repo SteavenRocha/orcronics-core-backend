@@ -1,82 +1,81 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateDeviceDto } from './dto/create-device.dto';
 import { UpdateDeviceDto } from './dto/update-device.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Device } from './entities/device.entity';
-import { Repository } from 'typeorm';
-import { AreasService } from 'src/areas/areas.service';
-import { DeviceMetadata } from './entities/device-metadata.entity';
+import { AreasService } from '../areas/areas.service';
 import { CreateDeviceMetadataDto } from './dto/create-device-metadata.dto';
 import { UpdateDeviceMetadataDto } from './dto/update-device-metadata.dto';
-import { QueryDto } from 'src/common/dto/query.dto';
-import { query } from 'src/common/helpers/query.helper';
+import { PrismaService } from '../prisma/prisma.service';
+import { Device } from '../generated/prisma/client';
+import { BuildQueryDto } from '../common/dto/build-query.dto';
+import { paginate } from '../common/helpers/paginator.helper';
 
 @Injectable()
 export class DevicesService {
 
   constructor(
-    @InjectRepository(Device)
-    private readonly deviceRepository: Repository<Device>,
-
-    @InjectRepository(DeviceMetadata)
-    private readonly metadataRepository: Repository<DeviceMetadata>,
-
+    private readonly prisma: PrismaService,
     private readonly areasService: AreasService,
   ) { }
 
   // ==================== DEVICE ====================
 
   async create(createDeviceDto: CreateDeviceDto): Promise<Device> {
-    const { area_id, metadata = [], ...deviceData } = createDeviceDto;
+    const { areaId, metadata = [], ...deviceData } = createDeviceDto;
 
-    const area = await this.areasService.findOne(area_id);
+    await this.areasService.findOne(areaId);
 
-    const device = this.deviceRepository.create({
-      ...deviceData,
-      area,
-      metadata: metadata.map((item) =>
-        this.metadataRepository.create(item)
-      ),
+    const result = await this.prisma.device.create({
+      data: {
+        ...deviceData,
+        areaId,
+        metadata: {
+          create: metadata.map((item) => ({
+            field: item.field,
+            value: item.value,
+          })),
+        },
+      },
+      include: {
+        metadata: true,
+      },
     });
 
-    const saved = await this.deviceRepository.save(device);
-    const { area: _, ...result } = saved;
-    return result as Device;
+    return result;
+  }
+
+  async findAllByArea(areaId: string, buildQueryDto: BuildQueryDto) {
+    await this.areasService.findOne(areaId);
+
+    const { search } = buildQueryDto;
+
+    const where = {
+      deletedAt: null,
+      areaId,
+      ...(search && {
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+        ],
+      }),
+    };
+
+    const result = await paginate<Device>(this.prisma.device, buildQueryDto, {
+      where,
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return result;
   }
 
   async findOne(id: string): Promise<Device> {
-    const device = await this.deviceRepository.findOne({
-      where: { id },
+    return await this.prisma.device.findFirstOrThrow({
+      where: {
+        id,
+        deletedAt: null
+      },
+      include: {
+        metadata: true,
+      },
     });
-
-    if (!device) {
-      throw new NotFoundException(`Device with ID "${id}" not found`);
-    }
-
-    return device;
-  }
-
-  async findOneWithMetadata(id: string): Promise<Device> {
-    const device = await this.deviceRepository.findOne({
-      where: { id },
-      relations: { metadata: true },
-    });
-
-    if (!device) {
-      throw new NotFoundException(`Device with ID "${id}" not found`);
-    }
-
-    return device;
-  }
-
-  async findByArea(areaId: string, queryDto: QueryDto) {
-    await this.areasService.findOne(areaId);
-
-    return await query(this.deviceRepository, queryDto, {
-      where: { area: { id: areaId } },
-      relations: { metadata: true },
-      order: { created_at: 'DESC' },
-    }, 'name');
   }
 
   async update(id: string, updateDeviceDto: UpdateDeviceDto): Promise<Device> {
@@ -86,84 +85,38 @@ export class DevicesService {
 
     const { metadata, ...deviceData } = updateDeviceDto;
 
-    const device = await this.findOne(id);
-    Object.assign(device, deviceData);
-    await this.deviceRepository.save(device);
-
-    if (metadata !== undefined) {
-      await this.metadataRepository.delete({ device: { id } });
-      const newMetadata = metadata.map(item =>
-        this.metadataRepository.create({ ...item, device: { id } })
-      );
-      await this.metadataRepository.save(newMetadata);
-    }
-
-    return await this.deviceRepository.findOne({
-      where: { id },
-      relations: { metadata: true },
-    }) as Device;
-  }
-
-  /*   async update(id: string, updateDeviceDto: UpdateDeviceDto): Promise<Device> {
-      if (Object.keys(updateDeviceDto).length === 0) {
-        throw new BadRequestException('No fields provided to update');
-      }
-  
-      const device = await this.findOne(id);
-      Object.assign(device, updateDeviceDto);
-      return await this.deviceRepository.save(device);
-    } */
-
-  async remove(id: string) {
-    const device = await this.findOneWithMetadata(id);
-    /* await this.metadataRepository.delete({ device: { id } }); */
-    await this.deviceRepository.softRemove(device);
-  }
-
-  // ==================== METADATA ====================
-
-  async addMetadata(deviceId: string, createMetadataDto: CreateDeviceMetadataDto): Promise<DeviceMetadata> {
-    const device = await this.findOne(deviceId);
-
-    const metadata = this.metadataRepository.create({
-      ...createMetadataDto,
-      device,
+    return await this.prisma.device.update({
+      where: {
+        id,
+        deletedAt: null
+      },
+      data: {
+        ...deviceData,
+        ...(metadata && {
+          metadata: {
+            deleteMany: {},
+            create: metadata.map((item) => ({
+              field: item.field,
+              value: item.value,
+            })),
+          },
+        }),
+      },
+      include: {
+        metadata: true,
+      },
     });
-
-    const { device: _, ...result } = await this.metadataRepository.save(metadata);
-    return result as DeviceMetadata;
   }
 
-  async updateMetadata(deviceId: string, metadataId: string, updateMetadataDto: UpdateDeviceMetadataDto): Promise<DeviceMetadata> {
-    if (Object.keys(updateMetadataDto).length === 0) {
-      throw new BadRequestException('No fields provided to update');
-    }
-
-    await this.findOne(deviceId);
-
-    const metadata = await this.metadataRepository.findOne({
-      where: { id: metadataId, device: { id: deviceId } },
+  async remove(id: string): Promise<void> {
+    await this.prisma.device.update({
+      where: {
+        id,
+        deletedAt: null
+      },
+      data: {
+        deletedAt: new Date(),
+      },
     });
-
-    if (!metadata) {
-      throw new NotFoundException(`Metadata with ID "${metadataId}" not found`);
-    }
-
-    Object.assign(metadata, updateMetadataDto);
-    return await this.metadataRepository.save(metadata);
-  }
-
-  async removeMetadata(deviceId: string, metadataId: string) {
-    await this.findOne(deviceId);
-
-    const metadata = await this.metadataRepository.findOne({
-      where: { id: metadataId, device: { id: deviceId } },
-    });
-
-    if (!metadata) {
-      throw new NotFoundException(`Metadata with ID "${metadataId}" not found`);
-    }
-
-    await this.metadataRepository.delete(metadataId);
   }
 }

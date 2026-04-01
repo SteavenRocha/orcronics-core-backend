@@ -1,6 +1,6 @@
-import { User } from "../../users/entities/user.entity";
+import { User } from "../../generated/prisma/client";
 
-export function sanitizeUser(user: User): Omit<User, 'password_hash' | 'refresh_token_hash'> {
-    const { password_hash, refresh_token_hash, ...safe } = user;
-    return safe;
+export function sanitizeUser(user: User): Omit<User, 'passwordHash' | 'refreshTokenHash'> {
+    const { passwordHash, refreshTokenHash, ...safeUser } = user;
+    return safeUser;
 }

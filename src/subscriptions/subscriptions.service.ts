@@ -1,13 +1,10 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Subscription } from './entities/subscription.entity';
 import { EvihubService } from '../integrations/evihub/evihub.service';
 import { SubscribeEvihubDto } from './dto/subscribe-evihub.dto';
 
 @Injectable()
 export class SubscriptionsService {
-  constructor(
+  /* constructor(
     @InjectRepository(Subscription)
     private subscriptionsRepository: Repository<Subscription>,
     private evihubService: EvihubService,
@@ -68,5 +65,5 @@ export class SubscriptionsService {
     return this.subscriptionsRepository.find({
       where: { customer: { id: customerId } },
     });
-  }
+  } */
 }

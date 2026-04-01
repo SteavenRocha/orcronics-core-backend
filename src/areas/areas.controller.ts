@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Query
 import { AreasService } from './areas.service';
 import { CreateAreaDto } from './dto/create-area.dto';
 import { UpdateAreaDto } from './dto/update-area.dto';
-import { QueryDto } from 'src/common/dto/query.dto';
+import { BuildQueryDto } from '../common/dto/build-query.dto';
 
 @Controller('areas')
 export class AreasController {
@@ -13,17 +13,17 @@ export class AreasController {
     return this.areasService.create(createAreaDto);
   }
 
+  @Get(':branchId/areas')
+  findByBranch(
+    @Param('branchId', ParseUUIDPipe) branchId: string,
+    @Query() buildQueryDto: BuildQueryDto
+  ) {
+    return this.areasService.findAllByBranch(branchId, buildQueryDto);
+  }
+
   @Get(':id')
   finOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.areasService.findOne(id);
-  }
-
-  @Get('branch/:branchId')
-  findByBranch(
-    @Param('branchId', ParseUUIDPipe) branchId: string,
-    @Query() queryDto: QueryDto
-  ) {
-    return this.areasService.findByBranch(branchId, queryDto);
   }
 
   @Patch(':id')

@@ -14,5 +14,5 @@ export class CreateAreaDto {
 
     @IsUUID()
     @IsNotEmpty()
-    branch_id: string;
+    branchId: string;
 }

@@ -2,7 +2,8 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Query
 import { CustomersService } from './customers.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
-import { QueryDto } from 'src/common/dto/query.dto';
+import { BuildQueryDto } from '../common/dto/build-query.dto';
+import { UpdateCustomerStatusDto } from './dto/update-customer-status.dto';
 
 @Controller('customers')
 export class CustomersController {
@@ -14,8 +15,8 @@ export class CustomersController {
   }
 
   @Get()
-  findAll(@Query() queryDto: QueryDto) {
-    return this.customersService.findAll(queryDto);
+  findAll(@Query() buildQueryDto: BuildQueryDto) {
+    return this.customersService.findAll(buildQueryDto);
   }
 
   @Get(':id')
@@ -24,18 +25,20 @@ export class CustomersController {
   }
 
   @Patch(':id')
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() updateCustomerDto: UpdateCustomerDto) {
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateCustomerDto: UpdateCustomerDto
+  ) {
     return this.customersService.update(id, updateCustomerDto);
   }
 
-  @Patch('deactivate/:id')
-  deactivate(@Param('id', ParseUUIDPipe) id: string) {
-    return this.customersService.deactivate(id);
-  }
-
-  @Patch('activate/:id')
-  activate(@Param('id', ParseUUIDPipe) id: string) {
-    return this.customersService.activate(id);
+  @Patch(':id/status')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  updateStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateCustomerStatusDto: UpdateCustomerStatusDto,
+  ) {
+    return this.customersService.updateStatus(id, updateCustomerStatusDto.isActive);
   }
 
   @Delete(':id')
