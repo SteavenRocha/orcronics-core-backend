@@ -59,6 +59,7 @@ export class DevicesService {
     const result = await paginate<Device>(this.prisma.device, buildQueryDto, {
       where,
       orderBy: { createdAt: 'desc' },
+      include: { metadata: true },
     });
 
     return result;

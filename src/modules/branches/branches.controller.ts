@@ -13,7 +13,7 @@ export class BranchesController {
     return this.branchesService.create(createBranchDto);
   }
 
-  @Get(':customerId/branches')
+  @Get('customer/:customerId')
   findByCustomer(
     @Param('customerId', ParseUUIDPipe) customerId: string,
     @Query() buildQueryDto: BuildQueryDto

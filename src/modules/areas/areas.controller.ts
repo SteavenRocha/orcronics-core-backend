@@ -13,7 +13,7 @@ export class AreasController {
     return this.areasService.create(createAreaDto);
   }
 
-  @Get(':branchId/areas')
+  @Get('branch/:branchId')
   findByBranch(
     @Param('branchId', ParseUUIDPipe) branchId: string,
     @Query() buildQueryDto: BuildQueryDto
