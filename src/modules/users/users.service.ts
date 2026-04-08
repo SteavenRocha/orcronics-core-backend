@@ -142,10 +142,10 @@ export class UsersService {
   }
 
   async updateRefreshToken(id: string, token: string | null): Promise<void> {
-    const hash = token ? await HashUtils.hash(token) : null;
+    /* const hash = token ? await HashUtils.hash(token) : null; */ // --> Ya recibe el token hasheado
     await this.prisma.user.update({
       where: { id },
-      data: { refreshTokenHash: hash },
+      data: { refreshTokenHash: token },
     });
   }
 }
