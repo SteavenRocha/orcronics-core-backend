@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Query
 import { DevicesService } from './devices.service';
 import { CreateDeviceDto } from './dto/create-device.dto';
 import { UpdateDeviceDto } from './dto/update-device.dto';
-import { BuildQueryDto } from 'src/common/dto/build-query.dto';
+import { BuildQueryDto } from '../../common/dto/build-query.dto';
 
 @Controller('devices')
 export class DevicesController {

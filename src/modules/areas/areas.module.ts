@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AreasService } from './areas.service';
 import { AreasController } from './areas.controller';
-import { BranchesModule } from 'src/branches/branches.module';
+import { BranchesModule } from '../branches/branches.module';
 
 @Module({
   imports: [

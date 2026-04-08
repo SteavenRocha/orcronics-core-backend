@@ -1,11 +1,11 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateBranchDto } from './dto/create-branch.dto';
 import { UpdateBranchDto } from './dto/update-branch.dto';
-import { CustomersService } from 'src/customers/customers.service';
-import { PrismaService } from '../prisma/prisma.service';
-import { Branch, Prisma } from '../generated/prisma/client';
-import { BuildQueryDto } from '../common/dto/build-query.dto';
-import { paginate } from '../common/helpers/paginator.helper';
+import { CustomersService } from '../customers/customers.service';
+import { PrismaService } from '../../prisma/prisma.service';
+import { Branch, Prisma } from '../../generated/prisma/client';
+import { BuildQueryDto } from '../../common/dto/build-query.dto';
+import { paginate } from '../../common/helpers/paginator.helper';
 
 @Injectable()
 export class BranchesService {

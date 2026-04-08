@@ -1,10 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
-import { PrismaService } from '../prisma/prisma.service';
-import { Customer } from '../generated/prisma/client';
-import { BuildQueryDto } from '../common/dto/build-query.dto';
-import { paginate } from '../common/helpers/paginator.helper';
+import { PrismaService } from '../../prisma/prisma.service';
+import { Customer } from '../../generated/prisma/client';
+import { BuildQueryDto } from '../../common/dto/build-query.dto';
+import { paginate } from '../../common/helpers/paginator.helper';
 
 @Injectable()
 export class CustomersService {

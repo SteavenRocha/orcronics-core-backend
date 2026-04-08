@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Query
 import { BranchesService } from './branches.service';
 import { CreateBranchDto } from './dto/create-branch.dto';
 import { UpdateBranchDto } from './dto/update-branch.dto';
-import { BuildQueryDto } from '../common/dto/build-query.dto';
+import { BuildQueryDto } from '../../common/dto/build-query.dto';
 
 @Controller('branches')
 export class BranchesController {

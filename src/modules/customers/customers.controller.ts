@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Query
 import { CustomersService } from './customers.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
-import { BuildQueryDto } from '../common/dto/build-query.dto';
+import { BuildQueryDto } from '../../common/dto/build-query.dto';
 import { UpdateCustomerStatusDto } from './dto/update-customer-status.dto';
 
 @Controller('customers')

@@ -2,8 +2,8 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { BuildQueryDto } from '../common/dto/build-query.dto';
-import { Public } from '../auth/decorators/public.decorator';
+import { BuildQueryDto } from '../../common/dto/build-query.dto';
+import { Public } from '../../auth/decorators/public.decorator';
 import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 
 @Controller('users')

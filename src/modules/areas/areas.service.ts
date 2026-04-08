@@ -2,10 +2,10 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateAreaDto } from './dto/create-area.dto';
 import { UpdateAreaDto } from './dto/update-area.dto';
 import { BranchesService } from '../branches/branches.service';
-import { PrismaService } from '../prisma/prisma.service';
-import { Area, Prisma } from '../generated/prisma/client';
-import { BuildQueryDto } from '../common/dto/build-query.dto';
-import { paginate } from '../common/helpers/paginator.helper';
+import { PrismaService } from '../../prisma/prisma.service';
+import { Area, Prisma } from '../../generated/prisma/client';
+import { BuildQueryDto } from '../../common/dto/build-query.dto';
+import { paginate } from '../../common/helpers/paginator.helper';
 
 @Injectable()
 export class AreasService {

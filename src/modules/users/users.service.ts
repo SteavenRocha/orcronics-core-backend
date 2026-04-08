@@ -1,12 +1,12 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { sanitizeUser } from '../common/helpers/sanitize-user.helper';
-import { BuildQueryDto } from '../common/dto/build-query.dto';
-import { paginate } from '../common/helpers/paginator.helper';
-import { PrismaService } from '../prisma/prisma.service';
-import { HashUtils } from '../common/utils/hash.util';
-import { User, UserRole } from '../generated/prisma/client';
+import { sanitizeUser } from '../../common/helpers/sanitize-user.helper';
+import { BuildQueryDto } from '../../common/dto/build-query.dto';
+import { paginate } from '../../common/helpers/paginator.helper';
+import { PrismaService } from '../../prisma/prisma.service';
+import { HashUtils } from '../../common/utils/hash.util';
+import { User, UserRole } from '../../generated/prisma/client';
 
 @Injectable()
 export class UsersService {

@@ -1,13 +1,11 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateDeviceDto } from './dto/create-device.dto';
 import { UpdateDeviceDto } from './dto/update-device.dto';
 import { AreasService } from '../areas/areas.service';
-import { CreateDeviceMetadataDto } from './dto/create-device-metadata.dto';
-import { UpdateDeviceMetadataDto } from './dto/update-device-metadata.dto';
-import { PrismaService } from '../prisma/prisma.service';
-import { Device } from '../generated/prisma/client';
-import { BuildQueryDto } from '../common/dto/build-query.dto';
-import { paginate } from '../common/helpers/paginator.helper';
+import { PrismaService } from '../../prisma/prisma.service';
+import { Device } from '../../generated/prisma/client';
+import { BuildQueryDto } from '../../common/dto/build-query.dto';
+import { paginate } from '../../common/helpers/paginator.helper';
 
 @Injectable()
 export class DevicesService {

@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Query
 import { AreasService } from './areas.service';
 import { CreateAreaDto } from './dto/create-area.dto';
 import { UpdateAreaDto } from './dto/update-area.dto';
-import { BuildQueryDto } from '../common/dto/build-query.dto';
+import { BuildQueryDto } from '../../common/dto/build-query.dto';
 
 @Controller('areas')
 export class AreasController {

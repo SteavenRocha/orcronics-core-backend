@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { EvihubService } from '../integrations/evihub/evihub.service';
+import { EvihubService } from '../../integrations/evihub/evihub.service';
 import { SubscribeEvihubDto } from './dto/subscribe-evihub.dto';
 
 @Injectable()
