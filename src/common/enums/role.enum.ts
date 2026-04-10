@@ -4,3 +4,8 @@ export enum Role {
     OPERATOR = 'operator',
     VIEWER = 'viewer',
 }
+
+export enum EvihubRole {
+    ADMIN = 'ADMIN',
+    VIEWER = 'VIEWER',
+}

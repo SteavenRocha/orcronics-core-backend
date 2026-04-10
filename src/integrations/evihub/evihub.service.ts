@@ -2,6 +2,8 @@ import { HttpService } from "@nestjs/axios";
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { firstValueFrom } from "rxjs";
+import { BuildQueryDto } from "src/common/dto/build-query.dto";
+import { CreateEvihubUserDto } from "./dto/create-evihub-user.dto";
 
 @Injectable()
 export class EvihubService {
@@ -18,27 +20,13 @@ export class EvihubService {
         return { 'x-api-key': this.configService.getOrThrow<string>('EVIHUB_API_KEY') };
     }
 
-    async createAccount(customerId: string, name: string) {
+    // ==================== ACCOUNT ====================
+
+    async createAccount(customerId: string) {
         const { data } = await firstValueFrom(
             this.httpService.post(
                 `${this.baseUrl}/webhooks/accounts`,
-                { customerId, name },
-                { headers: this.headers },
-            ),
-        );
-        return data;
-    }
-
-    async createUser(accountId: string, user: {
-        name: string;
-        email: string;
-        password: string;
-        role: string;
-    }) {
-        const { data } = await firstValueFrom(
-            this.httpService.post(
-                `${this.baseUrl}/webhooks/users`,
-                { ...user, accountId },
+                { customerId },
                 { headers: this.headers },
             ),
         );
@@ -50,6 +38,32 @@ export class EvihubService {
             this.httpService.patch(
                 `${this.baseUrl}/webhooks/accounts/${accountId}/status`,
                 { isActive },
+                { headers: this.headers },
+            ),
+        );
+        return data;
+    }
+
+    // ==================== USER ====================
+
+    async getUsersByAccount(accountId: string, buildQueryDto: BuildQueryDto) {
+        const { data } = await firstValueFrom(
+            this.httpService.get(
+                `${this.baseUrl}/webhooks/users/account/${accountId}`,
+                {
+                    headers: this.headers,
+                    params: buildQueryDto,
+                },
+            ),
+        );
+        return data;
+    }
+
+    async createUser(dto: CreateEvihubUserDto) {
+        const { data } = await firstValueFrom(
+            this.httpService.post(
+                `${this.baseUrl}/webhooks/users`,
+                dto,
                 { headers: this.headers },
             ),
         );

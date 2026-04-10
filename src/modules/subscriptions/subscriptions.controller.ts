@@ -1,30 +1,36 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import { SubscriptionsService } from './subscriptions.service';
 import { SubscribeEvihubDto } from './dto/subscribe-evihub.dto';
+import { BuildQueryDto } from '../../common/dto/build-query.dto';
+import { UpdateSubscriptionStatusDto } from './dto/update-subscription-status.dto';
 
 @Controller('subscriptions')
 export class SubscriptionsController {
-  /*  constructor(
-     private subscriptionsService: SubscriptionsService
-   ) { }
- 
-   @Post('evihub')
-   subscribeToEvihub(@Body() dto: SubscribeEvihubDto) {
-     return this.subscriptionsService.subscribeToEvihub(dto);
-   }
- 
-   @Patch('evihub/:customerId/activate')
-   activateEvihub(@Param('customerId', ParseUUIDPipe) customerId: string) {
-     return this.subscriptionsService.activateEvihub(customerId);
-   }
- 
-   @Patch('evihub/:customerId/deactivate')
-   deactivateEvihub(@Param('customerId', ParseUUIDPipe) customerId: string) {
-     return this.subscriptionsService.deactivateEvihub(customerId);
-   }
- 
-   @Get(':customerId')
-   findByCustomer(@Param('customerId', ParseUUIDPipe) customerId: string) {
-     return this.subscriptionsService.findByCustomer(customerId);
-   } */
+  constructor(
+    private readonly subscriptionsService: SubscriptionsService
+  ) { }
+
+  @Post('evihub')
+  subscribeToEvihub(@Body() subscribeEvihubDto: SubscribeEvihubDto) {
+    return this.subscriptionsService.subscribeToEvihub(subscribeEvihubDto);
+  }
+
+  @Get()
+  findAll(@Query() buildQueryDto: BuildQueryDto) {
+    return this.subscriptionsService.findAll(buildQueryDto);
+  }
+
+  @Get(':id')
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.subscriptionsService.findOne(id);
+  }
+
+  @Patch(':id/status')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  updateStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateSubscriptionStatusDto,
+  ) {
+    return this.subscriptionsService.updateStatus(id, dto);
+  }
 }

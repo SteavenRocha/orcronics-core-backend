@@ -1,69 +1,86 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, ConflictException, BadRequestException } from '@nestjs/common';
 import { EvihubService } from '../../integrations/evihub/evihub.service';
 import { SubscribeEvihubDto } from './dto/subscribe-evihub.dto';
+import { PrismaService } from '../../prisma/prisma.service';
+import { BuildQueryDto } from '../../common/dto/build-query.dto';
+import { paginate } from '../../common/helpers/paginator.helper';
+import { UpdateSubscriptionStatusDto } from './dto/update-subscription-status.dto';
 
 @Injectable()
 export class SubscriptionsService {
-  /* constructor(
-    @InjectRepository(Subscription)
-    private subscriptionsRepository: Repository<Subscription>,
-    private evihubService: EvihubService,
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly evihubService: EvihubService,
   ) { }
 
   async subscribeToEvihub(subscribeEvihubDto: SubscribeEvihubDto) {
-    const existing = await this.subscriptionsRepository.findOne({
-      where: { customer: { id: subscribeEvihubDto.customerId }, serviceName: 'evihub' },
+
+    const existing = await this.prisma.subscription.findFirst({
+      where: {
+        customerId: subscribeEvihubDto.customerId,
+        serviceName: 'evihub'
+      },
+    });
+    if (existing) throw new ConflictException('Customer already subscribed to Evihub');
+
+    const account = await this.evihubService.createAccount(subscribeEvihubDto.customerId);
+
+    const subscription = await this.prisma.subscription.create({
+      data: {
+        customerId: subscribeEvihubDto.customerId,
+        serviceName: 'evihub',
+        externalAccountId: account.id,
+      },
     });
 
-    if (existing) {
-      throw new ConflictException('Customer already has Evihub subscription');
-    }
-
-    const evihubAccount = await this.evihubService.createAccount(subscribeEvihubDto.customerId, subscribeEvihubDto.customerName);
-
-    const subscription = this.subscriptionsRepository.create({
-      customer: { id: subscribeEvihubDto.customerId },
-      serviceName: 'evihub',
-      externalAccountId: evihubAccount.id,
-      isActive: true,
-    });
-
-    return this.subscriptionsRepository.save(subscription);
+    return subscription;
   }
 
-  async deactivateEvihub(customerId: string) {
-    const subscription = await this.subscriptionsRepository.findOne({
-      where: { customer: { id: customerId }, serviceName: 'evihub' },
+  async findAll(buildQueryDto: BuildQueryDto) {
+    const { search } = buildQueryDto;
+
+    const where = {
+      deletedAt: null,
+      ...(search && {
+        customer: {
+          name: { contains: search, mode: 'insensitive' },
+        },
+      }),
+    };
+
+    const result = await paginate(this.prisma.subscription, buildQueryDto, {
+      where,
+      orderBy: { createdAt: 'desc' },
+      include: { customer: true },
     });
 
-    if (!subscription) {
-      throw new NotFoundException('Evihub subscription not found');
-    }
-
-    await this.evihubService.updateAccountStatus(subscription.externalAccountId, false);
-
-    subscription.isActive = false;
-    return this.subscriptionsRepository.save(subscription);
+    return result;
   }
 
-  async activateEvihub(customerId: string) {
-    const subscription = await this.subscriptionsRepository.findOne({
-      where: { customer: { id: customerId }, serviceName: 'evihub' },
+  async findOne(id: string) {
+    return this.prisma.subscription.findFirstOrThrow({
+      where: { id, deletedAt: null },
+      include: { customer: true },
     });
-
-    if (!subscription) {
-      throw new NotFoundException('Evihub subscription not found');
-    }
-
-    await this.evihubService.updateAccountStatus(subscription.externalAccountId, true);
-
-    subscription.isActive = true;
-    return this.subscriptionsRepository.save(subscription);
   }
 
-  async findByCustomer(customerId: string) {
-    return this.subscriptionsRepository.find({
-      where: { customer: { id: customerId } },
+  async updateStatus(id: string, dto: UpdateSubscriptionStatusDto) {
+    const subscription = await this.prisma.subscription.findFirstOrThrow({
+      where: { id, deletedAt: null }
     });
-  } */
+
+    if (subscription.isActive === dto.isActive) {
+      throw new BadRequestException(`Subscription is already ${dto.isActive ? 'active' : 'inactive'}`);
+    }
+
+    if (subscription.externalAccountId) {
+      await this.evihubService.updateAccountStatus(subscription.externalAccountId, dto.isActive);
+    }
+
+    await this.prisma.subscription.update({
+      where: { id },
+      data: { isActive: dto.isActive },
+    });
+  }
 }
