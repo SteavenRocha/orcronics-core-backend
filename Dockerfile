@@ -12,8 +12,8 @@ RUN corepack enable && corepack prepare yarn@4.13.0 --activate
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN yarn build
 RUN npx prisma generate
+RUN yarn build
 
 # 3. Runner
 FROM node:22-alpine3.20 AS runner
@@ -28,6 +28,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/src/generated ./src/generated
 
 # Entrypoint para correr migraciones antes de arrancar
 COPY entrypoint.sh ./entrypoint.sh
