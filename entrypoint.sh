@@ -2,7 +2,7 @@
 set -e
 
 echo "Running Prisma migrations..."
-npx prisma migrate deploy
+npx prisma migrate deploy --schema=./prisma/schema.prisma
 
 echo "Starting NestJS..."
 exec node dist/main
