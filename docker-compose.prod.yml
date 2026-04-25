@@ -1,4 +1,5 @@
 services:
+  # ─── BASES DE DATOS ────────────────────────────────────────
   postgres:
     image: postgres:17-alpine
     container_name: orcronics_db
@@ -9,8 +10,9 @@ services:
       POSTGRES_DB: ${DB_NAME}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_NAME}" ]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_NAME}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -18,19 +20,33 @@ services:
     networks:
       - app_network
 
+  mariadb:
+    image: mariadb:10.11
+    container_name: orcronics_mariadb
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${WP_DB_NAME}
+      MYSQL_USER: ${WP_DB_USER}
+      MYSQL_PASSWORD: ${WP_DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${WP_DB_ROOT_PASSWORD}
+    volumes:
+      - wordpress_db_data:/var/lib/mysql
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+    networks:
+      - app_network
+
+  # ─── ERP ───────────────────────────────────────────────────
   backend:
     build:
-      context: ./backend
+      context: ./erp/backend
       dockerfile: Dockerfile
     container_name: orcronics_backend
     restart: unless-stopped
     environment:
       NODE_ENV: ${NODE_ENV}
-      DB_HOST: postgres
-      DB_PORT: ${DB_PORT}
-      DB_USERNAME: ${DB_USERNAME}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_NAME: ${DB_NAME}
+      DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET: ${JWT_SECRET}
       JWT_ACCESS_EXPIRES: ${JWT_ACCESS_EXPIRES}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
@@ -45,7 +61,7 @@ services:
 
   frontend:
     build:
-      context: ./frontend
+      context: ./erp/frontend
       dockerfile: Dockerfile
       args:
         API_BASE_URL: https://dev.orcronics.com/api/v1
@@ -54,6 +70,61 @@ services:
     networks:
       - app_network
 
+  # ─── EVIHUB ────────────────────────────────────────────────
+  evihub_backend:
+    build:
+      context: ./evihub
+      dockerfile: apps/api/Dockerfile
+    container_name: evihub_backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${EVIHUB_DATABASE_URL}
+      BACKEND_PORT: 3001
+      JWT_SECRET: ${EVIHUB_JWT_SECRET}
+      JWT_ACCESS_EXPIRES: ${EVIHUB_JWT_ACCESS_EXPIRES}
+      JWT_REFRESH_SECRET: ${EVIHUB_JWT_REFRESH_SECRET}
+      JWT_REFRESH_EXPIRES: ${EVIHUB_JWT_REFRESH_EXPIRES}
+      FRONTEND_URL: ${EVIHUB_FRONTEND_URL}
+      API_BASE_URL: http://evihub_backend:3001/api/v2
+      WEBHOOK_API_KEY: ${EVIHUB_WEBHOOK_API_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app_network
+
+  evihub_frontend:
+    build:
+      context: ./evihub
+      dockerfile: apps/web/Dockerfile
+      args:
+        API_BASE_URL: https://evihub.orcronics.com/api/v2
+    container_name: evihub_frontend
+    restart: unless-stopped
+    networks:
+      - app_network
+
+  # ─── WORDPRESS ─────────────────────────────────────────────
+  wordpress:
+    image: wordpress:latest
+    container_name: orcronics_wordpress
+    restart: unless-stopped
+    environment:
+      WORDPRESS_DB_HOST: mariadb
+      WORDPRESS_DB_USER: ${WP_DB_USER}
+      WORDPRESS_DB_PASSWORD: ${WP_DB_PASSWORD}
+      WORDPRESS_DB_NAME: ${WP_DB_NAME}
+    depends_on:
+      - mariadb
+    volumes:
+      - wordpress_data:/var/www/html
+      - ./wordpress_uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
+    networks:
+      - app_network
+
+  # ─── NGINX ─────────────────────────────────────────────────
   nginx:
     image: nginx:alpine
     container_name: orcronics_nginx
@@ -64,16 +135,18 @@ services:
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
-      - /var/www/maintenance:/var/www/maintenance:ro
     depends_on:
       - backend
       - frontend
+      - evihub_backend
+      - evihub_frontend
     networks:
       - app_network
 
 volumes:
   postgres_data:
-    driver: local
+  wordpress_data:
+  wordpress_db_data:
 
 networks:
   app_network:
